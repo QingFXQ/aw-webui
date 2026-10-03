@@ -38,3 +38,301 @@ body {
   border: 1px solid $lightBorderColor;
   border-radius: 5px;
 }
+
+// Personal software-library motion layer. Keep this scoped under .library-home
+// so upstream ActivityWatch views retain their original interaction behavior.
+.library-home {
+  --library-motion-fast: 150ms;
+  --library-motion-normal: 240ms;
+  --library-motion-slow: 420ms;
+  --library-motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.library-home .library-header {
+  animation: library-rise-in 360ms var(--library-motion-ease) both;
+}
+
+.library-home .library-tabs {
+  animation: library-rise-in 400ms 30ms var(--library-motion-ease) both;
+}
+
+.library-home .library-summary {
+  animation: library-rise-in 440ms 55ms var(--library-motion-ease) both;
+}
+
+.library-home .library-toolbar {
+  animation: library-rise-in 460ms 80ms var(--library-motion-ease) both;
+}
+
+.library-home .library-status,
+.library-home .library-list-head,
+.library-home .library-loading,
+.library-home .library-empty {
+  animation: library-fade-in 300ms 100ms ease-out both;
+}
+
+.library-home .library-header-actions .btn,
+.library-home .refresh-button,
+.library-home .library-header-actions .dropdown-toggle {
+  transition:
+    transform var(--library-motion-fast) var(--library-motion-ease),
+    border-color var(--library-motion-fast) ease,
+    background-color var(--library-motion-fast) ease,
+    color var(--library-motion-fast) ease,
+    box-shadow var(--library-motion-fast) ease;
+}
+
+.library-home .library-tab {
+  transition:
+    color var(--library-motion-fast) ease,
+    opacity var(--library-motion-fast) ease;
+}
+
+.library-home .library-tab.active::after {
+  transform-origin: center;
+  animation: library-tab-line 320ms 80ms var(--library-motion-ease) both;
+}
+
+.library-home .library-summary .summary-item {
+  transition:
+    background-color var(--library-motion-normal) ease,
+    box-shadow var(--library-motion-normal) ease;
+}
+
+.library-home .library-summary .summary-item strong {
+  transition:
+    transform var(--library-motion-normal) var(--library-motion-ease),
+    color var(--library-motion-normal) ease;
+}
+
+.library-home .search-wrap,
+.library-home .scope-select,
+.library-home .sort-select {
+  transition: transform var(--library-motion-fast) var(--library-motion-ease);
+}
+
+.library-home .library-toolbar .form-control,
+.library-home .library-toolbar .custom-select {
+  transition:
+    border-color var(--library-motion-fast) ease,
+    background-color var(--library-motion-fast) ease,
+    box-shadow var(--library-motion-normal) ease;
+}
+
+.library-home .search-wrap:focus-within {
+  transform: translateY(-1px);
+}
+
+.library-home .search-wrap:focus-within .form-control {
+  border-color: rgba(143, 169, 255, 0.46);
+  box-shadow: 0 0 0 3px rgba(143, 169, 255, 0.08);
+}
+
+.library-home .library-list .library-row {
+  animation: library-row-in 340ms var(--library-motion-ease) both;
+  transition:
+    transform 180ms var(--library-motion-ease),
+    background-color 180ms ease,
+    box-shadow 180ms ease;
+  will-change: transform;
+}
+
+.library-home .library-list .library-row:nth-child(2) {
+  animation-delay: 18ms;
+}
+
+.library-home .library-list .library-row:nth-child(3) {
+  animation-delay: 36ms;
+}
+
+.library-home .library-list .library-row:nth-child(4) {
+  animation-delay: 54ms;
+}
+
+.library-home .library-list .library-row:nth-child(5) {
+  animation-delay: 72ms;
+}
+
+.library-home .library-list .library-row:nth-child(6) {
+  animation-delay: 90ms;
+}
+
+.library-home .library-list .library-row:nth-child(7) {
+  animation-delay: 108ms;
+}
+
+.library-home .library-list .library-row:nth-child(8) {
+  animation-delay: 126ms;
+}
+
+.library-home .library-list .library-row:nth-child(9) {
+  animation-delay: 144ms;
+}
+
+.library-home .library-list .library-row:nth-child(10) {
+  animation-delay: 162ms;
+}
+
+.library-home .library-list .library-row:nth-child(n + 11) {
+  animation-delay: 180ms;
+}
+
+.library-home .library-list .app-visual {
+  transition:
+    transform var(--library-motion-normal) var(--library-motion-ease),
+    border-color var(--library-motion-normal) ease,
+    box-shadow var(--library-motion-normal) ease,
+    filter var(--library-motion-normal) ease;
+  will-change: transform;
+}
+
+.library-home .library-list .app-icon {
+  transition:
+    transform var(--library-motion-slow) var(--library-motion-ease),
+    filter var(--library-motion-normal) ease,
+    opacity var(--library-motion-normal) ease;
+}
+
+.library-home .library-list .app-title,
+.library-home .library-list .primary-hours,
+.library-home .library-list .period-cell strong,
+.library-home .library-list .share-cell strong {
+  transition:
+    color var(--library-motion-fast) ease,
+    transform var(--library-motion-normal) var(--library-motion-ease);
+}
+
+.library-home .library-list .app-progress-fill {
+  transition:
+    width 520ms var(--library-motion-ease),
+    filter var(--library-motion-normal) ease,
+    box-shadow var(--library-motion-normal) ease;
+}
+
+.library-home .library-footer a {
+  display: inline-block;
+  transition:
+    color var(--library-motion-fast) ease,
+    transform var(--library-motion-fast) var(--library-motion-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .library-home .library-header-actions .btn:hover,
+  .library-home .refresh-button:hover,
+  .library-home .library-header-actions .dropdown-toggle:hover {
+    transform: translateY(-1px);
+    border-color: rgba(255, 255, 255, 0.14);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  }
+
+  .library-home .library-header-actions .btn:active,
+  .library-home .refresh-button:active,
+  .library-home .library-header-actions .dropdown-toggle:active {
+    transform: translateY(0) scale(0.975);
+  }
+
+  .library-home .library-summary .summary-item:hover {
+    background: rgba(255, 255, 255, 0.018);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  }
+
+  .library-home .library-summary .summary-item:hover strong {
+    color: #fff;
+    transform: translateY(-1px);
+  }
+
+  .library-home .scope-select:hover,
+  .library-home .sort-select:hover {
+    transform: translateY(-1px);
+  }
+
+  .library-home .library-list .library-row:hover {
+    z-index: 1;
+    transform: translateX(4px);
+    background: rgba(255, 255, 255, 0.035);
+    box-shadow:
+      -3px 0 0 rgba(143, 169, 255, 0.3),
+      0 8px 24px rgba(0, 0, 0, 0.12);
+  }
+
+  .library-home .library-list .library-row:hover .app-visual {
+    transform: translateY(-2px) scale(1.018);
+    filter: saturate(1.08) brightness(1.04);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+  }
+
+  .library-home .library-list .library-row:hover .app-icon {
+    transform: scale(1.055);
+    filter: drop-shadow(0 3px 7px rgba(0, 0, 0, 0.26));
+  }
+
+  .library-home .library-list .library-row:hover .app-title,
+  .library-home .library-list .library-row:hover .primary-hours,
+  .library-home .library-list .library-row:hover .period-cell strong,
+  .library-home .library-list .library-row:hover .share-cell strong {
+    color: #fff;
+  }
+
+  .library-home .library-list .library-row:hover .app-progress-fill {
+    filter: saturate(1.12) brightness(1.08);
+    box-shadow: 0 0 10px currentColor;
+  }
+
+  .library-home .library-footer a:hover {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes library-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes library-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes library-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(7px) scale(0.996);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes library-tab-line {
+  from {
+    opacity: 0;
+    transform: scaleX(0.35);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .library-home *,
+  .library-home *::before,
+  .library-home *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
