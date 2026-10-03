@@ -33,20 +33,6 @@ const HTML_LANG: Record<AppLocale, string> = {
   sv: 'sv',
 };
 
-function detectBrowserLocale(): AppLocale | null {
-  if (typeof navigator === 'undefined') {
-    return null;
-  }
-  const lang = (navigator.language || '').toLowerCase();
-  if (lang.startsWith('uk')) return 'uk';
-  if (lang.startsWith('de')) return 'de';
-  if (lang.startsWith('ru')) return 'ru';
-  if (lang.startsWith('zh')) return 'zh-CN';
-  if (lang.startsWith('sv')) return 'sv';
-  if (lang.startsWith('en')) return 'en';
-  return null;
-}
-
 export function getInitialLocale(): AppLocale {
   try {
     const saved = localStorage.getItem('locale');
