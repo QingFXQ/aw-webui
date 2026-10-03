@@ -1,15 +1,15 @@
 <template lang="pug">
 div
-  h3.mb-3 Work Time Report
+  h3.mb-3 工作时间报告
 
   div.row.mb-4
     div.col-md-3
-      b-form-group(label="Hosts" label-class="font-weight-bold")
+      b-form-group(label="设备" label-class="font-weight-bold")
         b-form-select(v-model="selectedHosts" :options="hostOptions" multiple :select-size="4")
-        small.text-muted Select devices to include
+        small.text-muted 选择要纳入统计的设备
 
     div.col-md-3
-      b-form-group(label="Categories" label-class="font-weight-bold")
+      b-form-group(label="分类" label-class="font-weight-bold")
         b-form-select(
           :value="''"
           :options="addableCategoryOptions"
@@ -21,14 +21,14 @@ div
             | {{ JSON.parse(cat).join(' > ') }}
             button.ml-1.close.small(
               type="button"
-              aria-label="Remove category"
+              aria-label="移除分类"
               style="font-size: 0.85rem; line-height: 1"
               @click="removeCategory(idx)"
             ) &times;
-        small.text-muted.d-block.mt-1 Subcategories are included automatically (e.g. "Work" also covers "Work > Programming").
+        small.text-muted.d-block.mt-1 会自动包含子分类（例如“Work”也会包含“Work > Programming”）。
 
     div.col-md-3
-      b-form-group(label="Break Time" label-class="font-weight-bold")
+      b-form-group(label="间歇时间" label-class="font-weight-bold")
         div.d-flex.align-items-center
           b-form-input(
             v-model="breakTime"
@@ -37,38 +37,38 @@ div
             max="30"
             step="1"
           )
-          span.ml-2.text-nowrap {{ breakTime }} min
-        small.text-muted Gaps shorter than this will be counted as work time
+          span.ml-2.text-nowrap {{ breakTime }} 分钟
+        small.text-muted 小于此时长的间隔会继续计入工作时间
 
     div.col-md-3
-      b-form-group(label="Date Range" label-class="font-weight-bold")
+      b-form-group(label="日期范围" label-class="font-weight-bold")
         b-form-select(v-model="dateRange" :options="dateRangeOptions")
 
   div.mb-3
     b-button(@click="loadData" variant="primary")
       icon(name="sync")
-      |  Calculate Work Time
+      |  计算工作时间
     b-button.ml-2(@click="exportCSV" variant="outline-secondary" :disabled="!hasData")
       icon(name="download")
-      |  Export CSV
+      |  导出 CSV
     b-button.ml-2(@click="exportJSON" variant="outline-secondary" :disabled="!hasData")
       icon(name="download")
-      |  Export JSON
+      |  导出 JSON
 
   div(v-if="loading")
     b-spinner.mr-2
-    | Loading...
+    | 加载中…
 
   div(v-if="hasData && !loading")
-    h5.mt-4 Daily Breakdown
+    h5.mt-4 每日明细
 
     table.table.table-sm.table-hover
       thead
         tr
-          th Date
-          th.text-right Work Time
-          th.text-right Sessions
-          th.text-right Avg Session
+          th 日期
+          th.text-right 工作时间
+          th.text-right 会话数
+          th.text-right 平均会话
       tbody
         tr(v-for="day in dailyData" :key="day.date")
           td {{ day.date }}
@@ -77,7 +77,7 @@ div
           td.text-right {{ formatDuration(day.avgSession) }}
       tfoot
         tr.font-weight-bold
-          td Total
+          td 合计
           td.text-right {{ formatDuration(totalDuration) }}
           td.text-right {{ totalSessions }}
           td.text-right {{ formatDuration(avgSessionLength) }}
@@ -163,7 +163,7 @@ export default {
       return [
         {
           value: '',
-          text: this.selectedCategories.length === 0 ? 'Select category…' : 'Add category…',
+          text: this.selectedCategories.length === 0 ? '选择分类…' : '添加分类…',
           disabled: true,
         },
         ...this.categoryOptions.filter(opt => !isCoveredBySelected(JSON.parse(opt.value))),
@@ -171,10 +171,10 @@ export default {
     },
     dateRangeOptions() {
       return [
-        { value: 'last7d', text: 'Last 7 days' },
-        { value: 'last30d', text: 'Last 30 days' },
-        { value: 'thisWeek', text: 'This week' },
-        { value: 'thisMonth', text: 'This month' },
+        { value: 'last7d', text: '最近 7 天' },
+        { value: 'last30d', text: '最近 30 天' },
+        { value: 'thisWeek', text: '本周' },
+        { value: 'thisMonth', text: '本月' },
       ];
     },
     hasData() {
@@ -205,13 +205,13 @@ export default {
         const client = getClient();
 
         if (this.selectedHosts.length === 0) {
-          alert('Please select at least one host');
+          alert('请至少选择一台设备。');
           this.loading = false;
           return;
         }
 
         if (this.selectedCategories.length === 0) {
-          alert('Please select at least one category');
+          alert('请至少选择一个分类。');
           this.loading = false;
           return;
         }
@@ -227,8 +227,8 @@ export default {
           );
           if (supportedHosts.length === 0) {
             alert(
-              `The selected hosts are missing aw-watcher-afk buckets and can't be included in Work Report: ${unsupportedHosts.join(
-                ', '
+              `所选设备缺少 aw-watcher-afk 存储桶，无法纳入工作报告：${unsupportedHosts.join(
+                '，'
               )}`
             );
             this.loading = false;
@@ -236,9 +236,9 @@ export default {
           }
 
           alert(
-            `Skipping hosts without aw-watcher-afk buckets: ${unsupportedHosts.join(
-              ', '
-            )}. Work Report will use: ${supportedHosts.join(', ')}`
+            `已跳过缺少 aw-watcher-afk 存储桶的设备：${unsupportedHosts.join(
+              '，'
+            )}。工作报告将使用：${supportedHosts.join('，')}`
           );
           this.selectedHosts = supportedHosts;
         }
@@ -309,7 +309,7 @@ export default {
         this.rawData = results;
       } catch (error) {
         console.error('Error loading work time data:', error);
-        alert('Error loading data. See console for details.');
+        alert('加载数据失败，请查看控制台了解详细信息。');
       } finally {
         this.loading = false;
       }
@@ -367,7 +367,7 @@ export default {
     },
 
     exportCSV() {
-      const headers = ['Date', 'Duration (hours)', 'Sessions', 'Avg Session (minutes)'];
+      const headers = ['日期', '时长（小时）', '会话数', '平均会话（分钟）'];
       const rows = this.dailyData.map(day => [
         day.date,
         (day.duration / 3600).toFixed(2),
@@ -379,7 +379,7 @@ export default {
         headers.join(','),
         ...rows.map(row => row.join(',')),
         '',
-        `Total,${(this.totalDuration / 3600).toFixed(2)},${this.totalSessions},${(
+        `合计,${(this.totalDuration / 3600).toFixed(2)},${this.totalSessions},${(
           this.avgSessionLength / 60
         ).toFixed(1)}`,
       ].join('\n');
