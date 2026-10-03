@@ -1,6 +1,6 @@
 <template lang="pug">
 div
-  h3 Alerts
+  h3 提醒
 
   // TODO: Call this "goals" instead? (alerts is more general, but goals might fit the most common use better
   // TODO: Support 'less than' goals
@@ -8,51 +8,51 @@ div
   // TODO: Query from day start, not 24h ago
 
   b-alert(variant="warning" show)
-    | This feature is still in early development.
+    | 此功能仍处于早期开发阶段。
 
   b-alert(v-if="error" show variant="danger")
     | {{error}}
 
   b-alert(v-if="hostnames.length === 0" show variant="info")
-    | No host with both window and AFK buckets is available, so alerts can't run yet.
-    | Install #[a(href="https://docs.activitywatch.net/en/latest/watchers.html") aw-watcher-window and aw-watcher-afk] to enable this view.
+    | 当前没有同时包含 window 与 AFK 存储桶的设备，因此暂时无法运行提醒。
+    | 请安装 #[a(href="https://docs.activitywatch.net/en/latest/watchers.html") aw-watcher-window 和 aw-watcher-afk] 后再使用此页面。
 
   b-card(v-for="alert in alerts", :key="alert.name")
     b-button.float-right(@click="deleteAlert(alert.name)" size="sm" variant="outline-danger")
       icon(name="trash")
 
-    div Goal name: {{ alert.name }}
-    div Category: {{ alert.category.join(" > ") }}
-    div Current: {{ alertTime(alert.category) | friendlyduration }} / {{alert.goal}} minutes
+    div 目标名称：{{ alert.name }}
+    div 分类：{{ alert.category.join(" > ") }}
+    div 当前：{{ alertTime(alert.category) | friendlyduration }} / {{alert.goal}} 分钟
       span(v-if="alertTime(alert.category) >= alert.goal")
         icon.text-success(name="check")
       span(v-else)
         icon.text-muted(name="times")
 
   div.d-flex.align-items-center.mt-3
-    b-btn(@click="check" variant="success" :disabled="!hostname") Check
-    b-form-checkbox.ml-3.mb-0(v-model="autorefresh", @change="toggleAutoRefresh", switch) Auto-refresh every 10s
+    b-btn(@click="check" variant="success" :disabled="!hostname") 检查
+    b-form-checkbox.ml-3.mb-0(v-model="autorefresh", @change="toggleAutoRefresh", switch) 每 10 秒自动刷新
 
   small.text-muted(v-if="last_updated")
-    | Last updated #[time(:datetime="last_updated && last_updated.toISOString && last_updated.toISOString()") {{ last_updated | friendlytime }}]
+    | 最近更新：#[time(:datetime="last_updated && last_updated.toISOString && last_updated.toISOString()") {{ last_updated | friendlytime }}]
 
   hr
 
   div
-    h4 New alert
-    b-form-group(label="Name" label-cols-md=2)
+    h4 新建提醒
+    b-form-group(label="名称" label-cols-md=2)
       b-input(v-model="editing_alert.name")
-    b-form-group(label="Category" label-cols-md=2)
+    b-form-group(label="分类" label-cols-md=2)
       b-select(v-model="editing_alert.category")
         option(v-for="category in categories" :value="category.value") {{ category.text }}
-    b-form-group(label="Goal" label-cols-md=2)
-      b-input-group(append="minutes")
+    b-form-group(label="目标" label-cols-md=2)
+      b-input-group(append="分钟")
         b-input(v-model="editing_alert.goal" type="number")
 
     div
       b-btn(@click="addAlert" variant="success")
         icon(name="plus")
-        | Add alert
+        | 添加提醒
 </template>
 
 <style scoped lang="scss"></style>
@@ -79,8 +79,8 @@ export default {
 
       // TODO: Support negative goals (avoid distractions)
       alerts: [
-        { name: 'Work', category: ['Work'], goal: 100 },
-        { name: 'Media', category: ['Media'], goal: 10 },
+        { name: '工作', category: ['Work'], goal: 100 },
+        { name: '媒体', category: ['Media'], goal: 10 },
       ],
       editing_alert: {},
 
