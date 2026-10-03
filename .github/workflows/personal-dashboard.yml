@@ -36,6 +36,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Show dashboard lint autofix diff
+        run: git diff -- src/components/Header.vue src/views/Home.vue
+
       - name: Build production WebUI
         run: npm run build
 
