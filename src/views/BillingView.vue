@@ -1,19 +1,19 @@
 <template lang="pug">
 div
-  h3.mb-3 Billable Hours Export
+  h3.mb-3 计费时长导出
 
   div.row.mb-4
     div.col-md-4
-      b-form-group(label="Hosts" label-class="font-weight-bold")
+      b-form-group(label="设备" label-class="font-weight-bold")
         b-form-select(v-model="selectedHosts" :options="hostOptions" multiple :select-size="4")
-        small.text-muted Select devices to include
+        small.text-muted 选择要纳入统计的设备
 
     div.col-md-4
-      b-form-group(label="Date Range" label-class="font-weight-bold")
+      b-form-group(label="日期范围" label-class="font-weight-bold")
         b-form-select(v-model="dateRange" :options="dateRangeOptions")
 
     div.col-md-4
-      b-form-group(label="Hourly Rate (optional)" label-class="font-weight-bold")
+      b-form-group(label="默认时薪（可选）" label-class="font-weight-bold")
         b-input-group(prepend="$")
           b-form-input(
             v-model.number="defaultRate"
@@ -22,19 +22,19 @@ div
             step="0.01"
             placeholder="0.00"
           )
-        small.text-muted Default rate applied to all categories. Override per row below.
+        small.text-muted 默认时薪会应用到所有分类；你也可以在下方逐项覆盖。
 
   div.mb-3
     b-button(@click="loadData" variant="primary" :disabled="loading")
       icon(name="sync")
-      |  Calculate Hours
+      |  计算时长
     b-button.ml-2(@click="exportCSV" variant="outline-secondary" :disabled="!hasData")
       icon(name="download")
-      |  Export CSV
+      |  导出 CSV
 
   div(v-if="loading")
     b-spinner.mr-2
-    | Loading...
+    | 加载中…
 
   div(v-if="errorMessage")
     b-alert(variant="danger" show) {{ errorMessage }}
@@ -43,16 +43,16 @@ div
     div.row.mb-2
       div.col
         small.text-muted
-          | Period: {{ periodLabel }} · Total: {{ formatDuration(totalDuration) }}
-          span(v-if="defaultRate > 0")  · Est. Total: {{ formatAmount(totalAmount) }}
+          | 周期：{{ periodLabel }} · 总时长：{{ formatDuration(totalDuration) }}
+          span(v-if="defaultRate > 0")  · 预计总金额：{{ formatAmount(totalAmount) }}
 
     table.table.table-sm.table-hover
       thead
         tr
-          th Category
-          th.text-right Hours
-          th.text-right Rate ($/h)
-          th.text-right Amount
+          th 分类
+          th.text-right 小时
+          th.text-right 时薪（$/h）
+          th.text-right 金额
       tbody
         tr(v-for="row in categoryRows" :key="row.key")
           td
@@ -72,7 +72,7 @@ div
           td.text-right {{ formatAmount(getAmount(row)) }}
       tfoot
         tr.font-weight-bold
-          td Total
+          td 合计
           td.text-right {{ formatHours(totalDuration) }}
           td.text-right —
           td.text-right {{ formatAmount(totalAmount) }}
@@ -152,10 +152,10 @@ export default {
     },
     dateRangeOptions() {
       return [
-        { value: 'thisMonth', text: 'This month' },
-        { value: 'last30d', text: 'Last 30 days' },
-        { value: 'thisWeek', text: 'This week' },
-        { value: 'last7d', text: 'Last 7 days' },
+        { value: 'thisMonth', text: '本月' },
+        { value: 'last30d', text: '最近 30 天' },
+        { value: 'thisWeek', text: '本周' },
+        { value: 'last7d', text: '最近 7 天' },
       ];
     },
     hasData() {
@@ -167,7 +167,7 @@ export default {
     periodLabel() {
       const tp = this.queriedPeriod || this.getTimeperiod();
       const [start, end] = tp.split('/');
-      return `${moment(start).format('MMM D')} – ${moment(end).format('MMM D, YYYY')}`;
+      return `${moment(start).format('YYYY年M月D日')} – ${moment(end).format('YYYY年M月D日')}`;
     },
   },
   async mounted() {
@@ -205,7 +205,7 @@ export default {
         const client = getClient();
 
         if (this.selectedHosts.length === 0) {
-          this.errorMessage = 'Please select at least one host.';
+          this.errorMessage = '请至少选择一台设备。';
           return;
         }
 
@@ -218,9 +218,7 @@ export default {
           this.bucketsStore.buckets || []
         );
         if (hostsToQuery.length === 0) {
-          this.errorMessage = `No supported hosts (require aw-watcher-afk): ${unsupported.join(
-            ', '
-          )}`;
+          this.errorMessage = `没有可用设备（需要 aw-watcher-afk）：${unsupported.join('，')}`;
           return;
         }
 
@@ -259,7 +257,7 @@ export default {
             };
           });
       } catch (err: any) {
-        this.errorMessage = `Error loading data: ${err?.message || err}`;
+        this.errorMessage = `加载数据失败：${err?.message || err}`;
         console.error(err);
       } finally {
         this.loading = false;
@@ -285,7 +283,7 @@ export default {
     formatDuration(seconds: number): string {
       const h = Math.floor(seconds / 3600);
       const m = Math.floor((seconds % 3600) / 60);
-      return `${h}h ${m}m`;
+      return `${h} 小时 ${m} 分钟`;
     },
 
     formatAmount(amount: number): string {
@@ -297,13 +295,13 @@ export default {
       const tp = this.queriedPeriod || this.getTimeperiod();
       const [start, end] = tp.split('/');
       const header = [
-        `# Billable Hours Export`,
-        `# Period: ${moment(start).format('YYYY-MM-DD')} to ${moment(end).format('YYYY-MM-DD')}`,
-        `# Generated: ${moment().format('YYYY-MM-DD HH:mm')}`,
+        `# 计费时长导出`,
+        `# 周期：${moment(start).format('YYYY-MM-DD')} 至 ${moment(end).format('YYYY-MM-DD')}`,
+        `# 生成时间：${moment().format('YYYY-MM-DD HH:mm')}`,
         '',
       ].join('\n');
 
-      const cols = ['Category', 'Hours', 'Rate ($/h)', 'Amount ($)'];
+      const cols = ['分类', '小时', '时薪（$/h）', '金额（$）'];
       const rows = this.categoryRows.map(row => {
         const rate = this.getEffectiveRate(row);
         const amount = this.getAmount(row);
@@ -317,7 +315,7 @@ export default {
       const totalRate = '';
       const totalAmountStr = this.totalAmount > 0 ? this.totalAmount.toFixed(2) : '';
       const totalsRow = [
-        '"TOTAL"',
+        '"合计"',
         (this.totalDuration / 3600).toFixed(2),
         totalRate,
         totalAmountStr,
