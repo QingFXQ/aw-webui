@@ -1,0 +1,48 @@
+name: Personal Dashboard Gate
+
+on:
+  push:
+    branches:
+      - feat/steam-style-dashboard
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fast-gate:
+    name: Fast gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build production WebUI
+        run: npm run build
+
+      - name: Upload personal WebUI build
+        uses: actions/upload-artifact@v4
+        with:
+          name: activitywatch-personal-webui
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
