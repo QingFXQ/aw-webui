@@ -94,8 +94,8 @@ div
         toggle-class="border-0"
         no-caret
         right
-        title="More ranges"
-        aria-label="More date ranges"
+        title="更多时间范围"
+        aria-label="更多时间范围"
       )
         template(v-slot:button-content)
           icon(name="ellipsis-v")
@@ -110,8 +110,8 @@ div
       b-input-group-prepend
         b-button.px-2(:to="link_prefix + '/' + previousPeriod() + '/' + subview + '/' + currentViewId",
                  variant="outline-dark",
-                 :title="'Previous ' + periodLength",
-                 :aria-label="'Previous ' + periodLength")
+                 :title="'上一段：' + (periodLengths[periodLength] || periodLength)",
+                 :aria-label="'上一段：' + (periodLengths[periodLength] || periodLength)")
           icon(name="arrow-left")
       template(v-if="dateRange")
         input.form-control.form-control-sm.activity-dateinput(
@@ -142,18 +142,18 @@ div
       b-input-group-append
         b-button.px-2(:to="link_prefix + '/' + nextPeriod() + '/' + subview + '/' + currentViewId",
                       :disabled="nextDisabled", variant="outline-dark",
-                      :title="'Next ' + periodLength",
-                      :aria-label="'Next ' + periodLength")
+                      :title="'下一段：' + (periodLengths[periodLength] || periodLength)",
+                      :aria-label="'下一段：' + (periodLengths[periodLength] || periodLength)")
           icon(name="arrow-right")
 
     div.ml-auto
       b-button-group(size="sm")
-        b-button.px-2(:pressed.sync="showOptions", variant="outline-dark", title="Filters", aria-label="Filters")
+        b-button.px-2(:pressed.sync="showOptions", variant="outline-dark", title="筛选", aria-label="筛选")
           icon(name="filter")
           span.d-none.d-md-inline
             |  {{ $t('activity.filters') }}
             b-badge(pill, variant="secondary" v-if="filters_set > 0").ml-2 {{ filters_set }}
-        b-button.px-2(@click="refresh(true)", variant="outline-dark", title="Refresh", aria-label="Refresh")
+        b-button.px-2(@click="refresh(true)", variant="outline-dark", title="刷新", aria-label="刷新")
           icon(name="sync")
           span.d-none.d-md-inline
             |  {{ $t('activity.refresh') }}
@@ -617,7 +617,6 @@ export default {
           throw 'unknown periodLength';
         }
       }
-
       const startOfPeriod = periodStart.format(dateFormatString);
       const endOfPeriod = periodStart.add(...periodLength).format(dateFormatString);
       return `${startOfPeriod}—${endOfPeriod}`;
