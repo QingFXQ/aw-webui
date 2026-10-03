@@ -1,16 +1,16 @@
 <template lang="pug">
 div
-  b-form-group(label="Hostname" label-cols=2)
+  b-form-group(label="主机" label-cols=2)
     b-form-select(v-model="queryOptionsData.hostname")
       option(v-for="hostname in hostnameChoices")
         | {{hostname}}
-  b-form-group(label="Start" label-cols=2)
+  b-form-group(label="开始日期" label-cols=2)
     input.form-control(type="date" v-model="queryOptionsData.start")
-  b-form-group(label="Stop" label-cols=2)
+  b-form-group(label="结束日期" label-cols=2)
     input.form-control(type="date" v-model="queryOptionsData.stop")
-  b-form-group(label="Toggles" label-cols=2)
-    b-form-checkbox(type="checkbox" v-model="queryOptionsData.filter_afk" label="Filter AFK" description="")
-      label Exclude time away from computer
+  b-form-group(label="开关" label-cols=2)
+    b-form-checkbox(type="checkbox" v-model="queryOptionsData.filter_afk" label="过滤 AFK" description="")
+      label 排除离开电脑的时间
 </template>
 
 <script lang="ts">
