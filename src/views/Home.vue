@@ -6,6 +6,23 @@ div.personal-dashboard
       h2.mb-1 我的电脑时间
       p.text-muted.mb-0 自动统计真实活跃时间，像 Steam 一样看见长期投入。
     div.d-flex.flex-wrap.mt-3.mt-md-0
+      b-dropdown.mr-2.mb-2(
+        v-if="availableHosts.length > 1"
+        size="sm"
+        variant="outline-secondary"
+        :text="deviceLabel"
+      )
+        b-dropdown-item-button(
+          :active="selectedHost === ALL_DEVICES"
+          @click="selectHost(ALL_DEVICES)"
+        ) 全部设备
+        b-dropdown-divider
+        b-dropdown-item-button(
+          v-for="host in availableHosts"
+          :key="host"
+          :active="selectedHost === host"
+          @click="selectHost(host)"
+        ) {{ host }}
       b-button.mr-2.mb-2(size="sm" variant="outline-secondary" to="/timeline") 时间线
       b-button.mr-2.mb-2(size="sm" variant="outline-secondary" :to="advancedActivityPath" :disabled="!hostParam") 高级统计
       b-button.mr-2.mb-2(size="sm" variant="outline-secondary" to="/settings") 设置
@@ -16,7 +33,7 @@ div.personal-dashboard
   div.update-line.text-muted.small.mb-3(v-if="lastUpdated")
     | 最近刷新：{{ lastUpdated }}
     span.ml-2(v-if="deviceLabel") · {{ deviceLabel }}
-    span.ml-2(v-if="availableHosts.length > 1") · 多设备重叠时间自动去重
+    span.ml-2(v-if="currentHosts.length > 1") · 多设备重叠时间自动去重
 
   b-alert(v-if="error" show variant="danger")
     strong 统计加载失败。
@@ -166,6 +183,7 @@ import {
   ALL_DEVICES,
   buildMultideviceHostParams,
   eligibleMultideviceHosts,
+  formatHostParam,
 } from '~/util/multidevice';
 import { getClient } from '~/util/awclient';
 import { get_day_start_with_offset, get_today_with_offset } from '~/util/time';
@@ -210,8 +228,7 @@ export default {
       error: '',
       lifetimeError: '',
       lifetimeProgress: { done: 0, total: 0 },
-      hostParam: '',
-      deviceLabel: '',
+      selectedHost: '',
       lastUpdated: '',
       availableHosts: [] as string[],
       rankingScope: 'week' as 'week' | 'lifetime',
@@ -233,6 +250,18 @@ export default {
     };
   },
   computed: {
+    currentHosts(): string[] {
+      if (this.selectedHost === ALL_DEVICES) return this.availableHosts;
+      return this.selectedHost ? [this.selectedHost] : [];
+    },
+    hostParam(): string {
+      if (this.selectedHost === ALL_DEVICES) return ALL_DEVICES;
+      return this.selectedHost ? formatHostParam([this.selectedHost]) : '';
+    },
+    deviceLabel(): string {
+      if (this.currentHosts.length > 1) return `${this.currentHosts.length} 台设备`;
+      return this.currentHosts[0] || '';
+    },
     advancedActivityPath(): string {
       if (!this.hostParam) return '/activity';
       return `/activity/${this.hostParam}/day`;
@@ -278,6 +307,12 @@ export default {
     getClient().abort();
   },
   methods: {
+    selectHost(host: string) {
+      if (host === this.selectedHost) return;
+      this.selectedHost = host;
+      this.loadDashboard();
+    },
+
     makePeriod(startDate: string, days: number) {
       return {
         start: get_day_start_with_offset(startDate, this.settingsStore.startOfDay),
@@ -291,9 +326,10 @@ export default {
       const categories = this.categoryStore.classes_for_query;
       const client = getClient();
 
-      if (this.availableHosts.length > 1) {
+      const hosts = this.currentHosts;
+      if (hosts.length > 1) {
         const { host_params, hosts_with_buckets } = buildMultideviceHostParams(
-          this.availableHosts,
+          hosts,
           this.bucketsStore.bucketsWindow,
           this.bucketsStore.bucketsAFK,
           this.bucketsStore.bucketsAndroid
@@ -344,7 +380,7 @@ export default {
         };
       }
 
-      const host = this.availableHosts[0];
+      const host = hosts[0];
       const windowBuckets = this.bucketsStore.bucketsWindow(host);
       const afkBuckets = this.bucketsStore.bucketsAFK(host);
       const androidBuckets = this.bucketsStore.bucketsAndroid(host);
@@ -415,7 +451,13 @@ export default {
       return (events || [])
         .map((event: IEvent) => {
           const raw = event.data ? event.data['$category'] : null;
-          const name = Array.isArray(raw) ? raw.join(' › ') : raw ? String(raw) : '未分类';
+          const name = Array.isArray(raw)
+            ? raw.length === 1 && raw[0] === 'Uncategorized'
+              ? '未分类'
+              : raw.join(' › ')
+            : raw
+              ? String(raw)
+              : '未分类';
           return { name, duration: Number(event.duration || 0) };
         })
         .filter((item: RankedItem) => item.duration > 0)
@@ -423,8 +465,8 @@ export default {
     },
 
     canSplitActiveEvents(): boolean {
-      if (this.availableHosts.length > 1) return true;
-      const host = this.availableHosts[0];
+      if (this.currentHosts.length > 1) return true;
+      const host = this.currentHosts[0];
       return (
         this.bucketsStore.bucketsWindow(host).length > 0 &&
         this.bucketsStore.bucketsAFK(host).length > 0
@@ -504,14 +546,17 @@ export default {
 
         this.availableHosts = eligibleHosts;
         if (eligibleHosts.length === 0) {
-          this.hostParam = '';
-          this.deviceLabel = '';
+          this.selectedHost = '';
           return;
         }
 
-        this.hostParam = eligibleHosts.length > 1 ? ALL_DEVICES : eligibleHosts[0];
-        this.deviceLabel =
-          eligibleHosts.length > 1 ? `${eligibleHosts.length} 台设备` : eligibleHosts[0];
+        const selectedIsValid =
+          this.selectedHost === ALL_DEVICES
+            ? eligibleHosts.length > 1
+            : eligibleHosts.includes(this.selectedHost);
+        if (!selectedIsValid) {
+          this.selectedHost = eligibleHosts.length > 1 ? ALL_DEVICES : eligibleHosts[0];
+        }
 
         const today = get_today_with_offset(this.settingsStore.startOfDay);
 
