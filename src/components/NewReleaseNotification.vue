@@ -1,15 +1,16 @@
 <template lang="pug">
   div
     b-alert(v-if="isVisible", variant="info", show)
-      | A new release, v{{ latestVersion }}, is available for
-      | #[a(href="https://activitywatch.net/downloads/" target="_blank" class="alert-link") download],
-      | you can also #[a(href="javascript:void(0);" class="alert-link" @click="disableCheck") disable]
-      | future reminders and checks for updates.
+      | ActivityWatch 新版本 v{{ latestVersion }} 已发布，可前往
+      | #[a(href="https://activitywatch.net/downloads/" target="_blank" class="alert-link") 下载页面]获取；
+      | 你也可以 #[a(href="javascript:void(0);" class="alert-link" @click="disableCheck") 关闭]
+      | 后续的更新检查和提醒。
       button(type="button", class="close", @click="isVisible=false") &times;
 
     b-alert(v-if="isFollowUpVisible", variant="success", show)
-      | Checking for new releases is now disabled, you can re-enable it in the
-      | #[router-link(to="/settings" class="alert-link" @click.native="isFollowUpVisible=false") settings page].
+      | 已关闭新版本检查。你可以随时在
+      | #[router-link(to="/settings" class="alert-link" @click.native="isFollowUpVisible=false") 设置页面]
+      | 重新开启。
       button(type="button", class="close", @click="isFollowUpVisible=false") &times;
 </template>
 

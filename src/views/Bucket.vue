@@ -3,27 +3,27 @@ div
   h3 {{ id }}
   table
     tr
-      th Type:
+      th 类型：
       td {{ bucket.type }}
     tr
-      th Client:
+      th 客户端：
       td {{ bucket.client }}
     tr
-      th Hostname:
+      th 主机：
       td {{ bucket.hostname }}
     tr
-      th Created:
+      th 创建时间：
       td {{ bucket.created | iso8601 }}
     tr(v-if="bucket.metadata")
-      th First/last event:
+      th 首个/最后事件：
       td
         | {{ bucket.metadata.start}} /
         | {{ bucket.metadata.end }}
     tr
-      th Eventcount:
+      th 事件数量：
       td {{ eventcount }}
     tr
-      th Data:
+      th 数据：
       td {{ bucket.data }}
 
   input-timeinterval(v-model="daterange", :maxDuration="maxDuration")

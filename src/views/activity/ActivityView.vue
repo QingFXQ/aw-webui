@@ -1,11 +1,11 @@
 <template lang="pug">
 div(v-if="viewMissing")
   b-alert.mt-3(show variant="warning")
-    | This view ("#[code {{ view_id }}]") doesn't exist on this dashboard.
+    | 当前仪表板中不存在此视图（"#[code {{ view_id }}]"）。
     |
     router-link(:to="{ name: 'activity-view', params: {...$route.params, view_id: 'default'} }")
-      | Go to the default view
-    | .
+      | 返回默认视图
+    | 。
 div(v-else-if="view")
   draggable.row(v-model="elements" handle=".handle")
     // TODO: Handle large/variable sized visualizations better
@@ -18,58 +18,60 @@ div(v-else-if="view")
     div.col-md-6.col-lg-4.p-3(v-if="editing")
       b-button(@click="addVisualization" variant="outline-dark" block size="lg")
         icon(name="plus")
-        span Add visualization
+        span 添加可视化
 
   div(v-if="editing").mt-2
     div.d-flex.flex-row-reverse
       b-button(variant="outline-dark" @click="discard(); editing = !editing;")
         icon(name="times")
-        span Cancel
+        span 取消
       b-button.mr-2(variant="success" @click="save(); editing = !editing;")
         icon(name="save")
-        span Save
+        span 保存
     div.mt-2.d-flex.flex-row-reverse
       b-button(variant="warning" size="sm" @click="restoreDefaults();")
         icon(name="undo")
-        span Restore defaults
+        span 恢复默认值
       b-button.mr-2(variant="danger" size="sm" v-b-modal="'remove-view-modal-' + view.id")
         icon(name="trash")
-        span Remove
+        span 删除
   div(v-else).d-flex.flex-row-reverse.mt-2
     b-button(variant="outline-dark" size="sm" @click="editing = !editing")
       icon(name="edit")
-      span Edit view
+      span 编辑视图
 
   b-modal(
     v-if="view"
     :id="'remove-view-modal-' + view.id"
-    title="Remove this view?"
+    title="删除此视图？"
     centered
-    ok-title="Remove view"
+    ok-title="删除视图"
     ok-variant="danger"
+    cancel-title="取消"
     cancel-variant="outline-secondary"
     @ok="remove"
   )
-    | Are you sure you want to remove "#[b {{ view.name || view.id }}]"?
+    | 确定要删除“#[b {{ view.name || view.id }}]”吗？
     br
     br
-    | This will delete the view's configuration. You can run #[b Restore defaults] to bring built-in views back.
+    | 这会删除该视图的配置。你可以使用 #[b 恢复默认值] 重新生成内置视图。
 
   b-modal(
     v-model="showCustomVisModal"
-    title="Add Custom Visualization"
-    ok-title="Add"
+    title="添加自定义可视化"
+    ok-title="添加"
+    cancel-title="取消"
     @ok="onCustomVisConfirm"
   )
-    b-form-group(label="Watcher name:")
+    b-form-group(label="Watcher 名称：")
       b-form-input(
         v-model="customVisWatcherName"
         placeholder="aw-watcher-"
       )
-    b-form-group(label="Visualization title:")
+    b-form-group(label="可视化标题：")
       b-form-input(
         v-model="customVisTitle"
-        placeholder="My Visualization"
+        placeholder="我的可视化"
       )
 </template>
 
@@ -142,9 +144,7 @@ export default {
     },
     restoreDefaults() {
       useViewsStore().restoreDefaults();
-      alert(
-        "All views have been restored to defaults. Changes won't be saved until you click 'Save'."
-      );
+      alert('所有视图都已恢复为默认值。点击“保存”前，这些更改不会写入。');
       // If we're on an URL that might become invalid, navigate to the main/default view
       if (!this.$route.path.includes('default')) {
         this.$router.replace('./default');

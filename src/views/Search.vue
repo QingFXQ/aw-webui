@@ -1,31 +1,31 @@
 <template lang="pug">
 div
-  h3 Search
+  h3 搜索
 
   b-alert(v-if="error" show variant="danger")
     | {{error}}
 
   b-input-group(size="lg")
-    b-input(v-model="pattern" v-on:keyup.enter="search()" placeholder="Regex pattern to search for")
+    b-input(v-model="pattern" v-on:keyup.enter="search()" placeholder="输入要搜索的正则表达式")
     b-input-group-append
       b-button(type="button", @click="search()" variant="success")
         icon.mr-1(name="search")
-        | Search
+        | 搜索
 
   div.d-flex.mt-1
-    span.mr-auto.small.text-muted Hostname: {{queryOptions.hostname}}
+    span.mr-auto.small.text-muted 主机：{{queryOptions.hostname}}
     b-button.border-0(size="sm", variant="outline-dark" @click="show_options = !show_options")
       span(v-if="!show_options")
-        | #[icon(name="angle-double-down")] Show options
+        | #[icon(name="angle-double-down")] 显示选项
       span(v-else)
-        | #[icon(name="angle-double-up")] Hide options
+        | #[icon(name="angle-double-up")] 收起选项
 
   div(v-show="show_options")
-    h4 Options
+    h4 选项
     aw-query-options(v-model="queryOptions")
 
   div(v-if="status == 'searching'")
-    div #[icon(name="spinner" pulse)] Searching...
+    div #[icon(name="spinner" pulse)] 搜索中…
 
   div(v-if="events != null")
     hr
@@ -33,9 +33,9 @@ div
     aw-selectable-eventview(:events="events")
 
     div
-      | Didn't find what you were looking for?
+      | 没找到想要的内容？
       br
-      | Add a week to the search: #[b-button(size="sm" variant="outline-dark" @click="extendByWeek()") +1 week]
+      | 将搜索范围向前扩展一周：#[b-button(size="sm" variant="outline-dark" @click="extendByWeek()") +1 周]
 </template>
 
 <script lang="ts">

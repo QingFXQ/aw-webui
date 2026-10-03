@@ -1,9 +1,9 @@
 <template lang="pug">
 
 div
-  h3 Query Explorer
+  h3 查询浏览器
 
-  | See #[a(href="https://docs.activitywatch.net/en/latest/examples/querying-data.html") the documentation] for help on how to write queries.
+  | 如需了解如何编写查询，请查看 #[a(href="https://docs.activitywatch.net/en/latest/examples/querying-data.html") 文档]。
 
   hr
 
@@ -16,32 +16,32 @@ div
   form
     div.form-row.align-items-end
       div.form-group.col-lg-6
-        label.mb-1(for="saved-query-select") Saved Queries
+        label.mb-1(for="saved-query-select") 已保存的查询
         select#saved-query-select.form-control(v-model="selected_saved_query_id", @change="loadSelectedQuery()")
-          option(value="") Select saved query...
+          option(value="") 选择已保存的查询…
           option(v-for="savedQuery in savedQueries", :key="savedQuery.id", :value="savedQuery.id")
             | {{savedQuery.name}}
       div.form-group.col-lg-6
         div.saved-query-actions
-          button.btn.btn-success.mr-2(type="button", @click="saveCurrentQuery()") Save Current
-          button.btn.btn-secondary.mr-2(type="button", @click="renameSelectedQuery()", :disabled="!selected_saved_query_id") Rename
+          button.btn.btn-success.mr-2(type="button", @click="saveCurrentQuery()") 保存当前查询
+          button.btn.btn-secondary.mr-2(type="button", @click="renameSelectedQuery()", :disabled="!selected_saved_query_id") 重命名
           button.btn.btn-danger(type="button", @click="deleteSelectedQuery()", :disabled="!selected_saved_query_id")
             icon(name="trash")
-            |  Delete
+            |  删除
 
     div.form-row
       div.form-group.col-md-6
-        | Start
+        | 开始
         input.form-control(type="date", :max="today", v-model="startdate")
       div.form-group.col-md-6
-        | End
+        | 结束
         input.form-control(type="date", :max="tomorrow", v-model="enddate")
 
     div.form-group
       textarea.form-control(v-model="query_code", @keypress.ctrl.enter="query()" style="font-family: monospace", rows=10)
     div.form-inline
       div.form-group
-        button.btn.btn-success(type="button", @click="query()") Query
+        button.btn.btn-success(type="button", @click="query()") 执行查询
       span(style="padding-left: 1em;")
       | {{eventcount_str}}
 
@@ -51,30 +51,32 @@ div
 
   b-modal(
     v-model="showSaveQueryModal"
-    title="Save Query"
-    ok-title="Save"
+    title="保存查询"
+    ok-title="保存"
+    cancel-title="取消"
     @ok="onSaveQueryConfirm"
     @shown="$refs.saveQueryNameInput && $refs.saveQueryNameInput.focus()"
   )
-    b-form-group(label="Name for the saved query:")
+    b-form-group(label="查询名称：")
       b-form-input(
         ref="saveQueryNameInput"
         v-model="saveQueryName"
-        placeholder="Query name"
+        placeholder="查询名称"
       )
 
   b-modal(
     v-model="showRenameQueryModal"
-    title="Rename Query"
-    ok-title="Rename"
+    title="重命名查询"
+    ok-title="重命名"
+    cancel-title="取消"
     @ok="onRenameQueryConfirm"
     @shown="$refs.renameQueryNameInput && $refs.renameQueryNameInput.focus()"
   )
-    b-form-group(label="New name for saved query:")
+    b-form-group(label="新的查询名称：")
       b-form-input(
         ref="renameQueryNameInput"
         v-model="renameQueryName"
-        placeholder="Query name"
+        placeholder="查询名称"
       )
 </template>
 
@@ -150,7 +152,7 @@ RETURN = sort_by_duration(merged_events);
       return this.savedQueries.find(query => query.id === this.selected_saved_query_id) || null;
     },
     eventcount_str: function () {
-      if (Array.isArray(this.events)) return 'Number of events: ' + this.events.length;
+      if (Array.isArray(this.events)) return '事件数量：' + this.events.length;
       else return '';
     },
   },
@@ -166,7 +168,7 @@ RETURN = sort_by_duration(merged_events);
         return true;
       } catch (e) {
         console.error('Failed to save query presets', e);
-        this.saved_query_error = 'Failed to save query presets.';
+        this.saved_query_error = '保存查询预设失败。';
         return false;
       }
     },
@@ -186,7 +188,7 @@ RETURN = sort_by_duration(merged_events);
       const current = this.selectedSavedQuery;
 
       if (current) {
-        if (!confirm(`Update saved query "${current.name}"?`)) {
+        if (!confirm(`更新已保存的查询“${current.name}”？`)) {
           return;
         }
 
@@ -219,7 +221,7 @@ RETURN = sort_by_duration(merged_events);
 
       const trimmedName = this.saveQueryName.trim();
       if (_.isEmpty(trimmedName)) {
-        this.saved_query_error = 'Saved query name cannot be empty.';
+        this.saved_query_error = '查询名称不能为空。';
         return;
       }
 
@@ -259,7 +261,7 @@ RETURN = sort_by_duration(merged_events);
 
       const trimmedName = this.renameQueryName.trim();
       if (_.isEmpty(trimmedName)) {
-        this.saved_query_error = 'Saved query name cannot be empty.';
+        this.saved_query_error = '查询名称不能为空。';
         return;
       }
 
@@ -278,9 +280,7 @@ RETURN = sort_by_duration(merged_events);
         return;
       }
 
-      if (
-        !confirm(`Delete saved query "${this.selectedSavedQuery.name}"? This cannot be undone.`)
-      ) {
+      if (!confirm(`删除已保存的查询“${this.selectedSavedQuery.name}”？此操作无法撤销。`)) {
         return;
       }
 
@@ -299,7 +299,7 @@ RETURN = sort_by_duration(merged_events);
         const categoryRules = useCategoryStore().classes_for_query;
 
         if (useCategoryStore().classes_for_query.length === 0) {
-          this.error = '__CATEGORIES__ was used in query but no categories have been defined yet.';
+          this.error = '查询中使用了 __CATEGORIES__，但当前还没有定义任何分类。';
           return;
         }
 

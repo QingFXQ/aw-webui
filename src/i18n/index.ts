@@ -33,20 +33,6 @@ const HTML_LANG: Record<AppLocale, string> = {
   sv: 'sv',
 };
 
-function detectBrowserLocale(): AppLocale | null {
-  if (typeof navigator === 'undefined') {
-    return null;
-  }
-  const lang = (navigator.language || '').toLowerCase();
-  if (lang.startsWith('uk')) return 'uk';
-  if (lang.startsWith('de')) return 'de';
-  if (lang.startsWith('ru')) return 'ru';
-  if (lang.startsWith('zh')) return 'zh-CN';
-  if (lang.startsWith('sv')) return 'sv';
-  if (lang.startsWith('en')) return 'en';
-  return null;
-}
-
 export function getInitialLocale(): AppLocale {
   try {
     const saved = localStorage.getItem('locale');
@@ -56,7 +42,9 @@ export function getInitialLocale(): AppLocale {
   } catch {
     /* ignore */
   }
-  return detectBrowserLocale() ?? 'en';
+  // This personal fork is Chinese-first. Keep explicit user selections,
+  // but make Simplified Chinese the first-run default regardless of OS locale.
+  return 'zh-CN';
 }
 
 const MOMENT_LOCALE: Record<AppLocale, string> = {
@@ -72,6 +60,8 @@ const initialLocale = getInitialLocale();
 
 export const i18n = new VueI18n({
   locale: initialLocale,
+  // Keep the upstream English fallback for technical/developer-only keys that
+  // have not been localized yet, so the UI never exposes raw translation keys.
   fallbackLocale: 'en',
   messages: { en, uk, de, ru, 'zh-CN': zhCN, sv },
   silentTranslationWarn: process.env.NODE_ENV === 'production',
@@ -80,7 +70,7 @@ export const i18n = new VueI18n({
 moment.locale(MOMENT_LOCALE[initialLocale]);
 
 export function setAppLocale(locale: string): void {
-  const next = isAppLocale(locale) ? locale : 'en';
+  const next = isAppLocale(locale) ? locale : 'zh-CN';
   i18n.locale = next;
   moment.locale(MOMENT_LOCALE[next]);
   document.documentElement.lang = HTML_LANG[next];

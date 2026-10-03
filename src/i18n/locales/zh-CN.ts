@@ -2,7 +2,7 @@
 export default {
   app: {
     name: 'ActivityWatch',
-    researchEdition: 'Research Edition',
+    researchEdition: '研究版',
   },
   nav: {
     activity: '活动',
@@ -13,6 +13,7 @@ export default {
     tools: '工具',
     search: '搜索',
     workReport: '工作报告',
+    aiSummary: 'AI 总结',
     trends: '趋势',
     report: '报告',
     alerts: '提醒',
@@ -185,8 +186,8 @@ export default {
     spreadStar: '给我们加星：',
     supportTitle: '支持我们！',
     subscribeIntro:
-      'The best way to keep ActivityWatch maintained is a subscription — from $5/month, every feature stays free, cancel anytime.',
-    subscribeCta: 'Support ActivityWatch →',
+      '支持 ActivityWatch 持续维护的最佳方式是订阅——每月 5 美元起，所有功能仍保持免费，并可随时取消。',
+    subscribeCta: '支持 ActivityWatch →',
     support1:
       '你喜欢 ActivityWatch 吗？它帮到你了吗？通过捐赠帮助我们继续帮助你！你可以通过以下方式捐赠：',
     support2: '更多信息请访问',
@@ -206,10 +207,9 @@ export default {
     workingOnSuffix: '上关注项目获取发布说明。',
     landingHint: '你可以在',
     supporterNudge: {
-      message:
-        "You've been getting a lot out of ActivityWatch — would you consider supporting its development?",
-      support: 'Support ActivityWatch →',
-      notNow: 'Not now',
+      message: '你已经从 ActivityWatch 获得了不少帮助，愿意考虑支持它继续开发吗？',
+      support: '支持 ActivityWatch →',
+      notNow: '暂时不要',
     },
   },
   buckets: {

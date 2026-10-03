@@ -1,16 +1,16 @@
 <template lang="pug">
 div
-  h3 Timespiral
+  h3 时间螺旋
   b-alert(show, variant="warning")
-    | This is a work-in-progress experiment.
+    | 这是一个仍在开发中的实验功能。
 
   div(v-if="!bucketId")
     p.text-muted
-      | No AFK bucket found on this host. Install
+      | 当前设备没有找到 AFK 存储桶。请安装
       | #[a(href="https://docs.activitywatch.net/en/latest/watchers.html") aw-watcher-afk]
-      | to use the Timespiral.
+      | 后再使用时间螺旋。
   div(v-else)
-    p.small.text-muted Bucket: #[code {{ bucketId }}] &middot; Events: {{ events.length }}
+    p.small.text-muted 存储桶：#[code {{ bucketId }}] &middot; 事件：{{ events.length }}
     Timespiral(:events="events")
 </template>
 

@@ -1,32 +1,32 @@
 <template lang="pug">
-b-modal(v-if="event && event.id", :id="'edit-modal-' + event.id", ref="eventEditModal", title="Edit event", centered, hide-footer)
+b-modal(v-if="event && event.id", :id="'edit-modal-' + event.id", ref="eventEditModal", title="编辑事件", centered, hide-footer)
   div(v-if="!editedEvent")
-    | Loading event...
+    | 正在加载事件…
 
   div(v-else)
     table(style="width: 100%")
       tr
-        th Bucket
+        th 存储桶
         td {{ bucket_id }}
       tr
         th ID
         td {{ event.id }}
       tr
-        th Start
+        th 开始时间
         datetime(type="datetime" v-model="start")
       tr
-        th End
+        th 结束时间
         datetime(type="datetime" v-model="end")
       tr
-        th Duration
+        th 持续时间
         td {{ editedEvent.duration | friendlyduration }}
 
     hr
 
     table(style="width: 100%")
       tr
-        th Key
-        th Value
+        th 键
+        th 值
       tr(v-for="(v, k) in editedEvent.data" :key="k")
         td
           b-input(disabled, :value="k", size="sm")
@@ -40,14 +40,14 @@ b-modal(v-if="event && event.id", :id="'edit-modal-' + event.id", ref="eventEdit
     div.float-left
       b-button.mx-1(@click="delete_(); close();" variant="danger")
         icon.mx-1(name="trash")
-        | Delete
+        | 删除
     div.float-right
       b-button.mx-1(@click="close")
         icon.mx-1(name="times")
-        | Cancel
+        | 取消
       b-button.mx-1(@click="save(); close();", variant="primary")
         icon.mx-1(name="save")
-        | Save
+        | 保存
 </template>
 
 <style lang="scss"></style>

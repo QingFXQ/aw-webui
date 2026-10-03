@@ -2,7 +2,7 @@
 div
   b-row
     b-col(cols="12", md="6").mb-2
-      b-form-group(label="Bucket")
+      b-form-group(label="存储桶")
         b-form-select(
           v-model="selectedBucketId",
           :options="bucketOptions",
@@ -11,9 +11,9 @@ div
     b-col(cols="12", md="6").mb-2
       b-form-group
         template(#label)
-          span Field in event data
+          span 事件数据字段
           span.info-icon(
-            title="Field names come from event data. Dot notation is supported (e.g., data.title)."
+            title="字段名称来自事件数据，支持点号路径（例如 data.title）。"
           ) i
         b-form-select(
           v-model="selectedField",
@@ -23,19 +23,19 @@ div
         b-form-input.mt-2(
           v-if="selectedField === '__custom' || fieldOptions.length === 0",
           v-model="customField",
-          placeholder="e.g. data.title",
+          placeholder="例如 data.title",
           :disabled="loading"
         )
   b-alert.mt-2(v-if="error", show, variant="danger") {{ error }}
   b-alert.mt-2(v-else-if="!selectedBucketId" show variant="info")
-    | Select a watcher to load events for this period.
+    | 请选择一个 watcher，以加载当前时间范围内的事件。
   b-alert.mt-2(v-else-if="!loading && aggregated.length === 0" show variant="warning")
-    | No events found for this watcher and time range.
+    | 当前 watcher 和时间范围内没有找到事件。
 
   div.mt-2
     div.text-center.py-4(v-if="loading")
-      b-spinner(small type="grow" label="Loading")
-      span.ml-2 Loading events...
+      b-spinner(small type="grow" label="加载中")
+      span.ml-2 正在加载事件…
     aw-summary(
       v-else-if="aggregated.length",
       :fields="aggregated",
@@ -45,7 +45,7 @@ div
       with_limit
     )
     div.text-muted.text-center.py-4(v-else)
-      | Pick a field to see results.
+      | 选择一个字段以查看结果。
 </template>
 
 <script lang="ts">
@@ -60,7 +60,7 @@ interface AggregatedEvent {
 }
 function formatValue(value: unknown): string {
   if (Array.isArray(value)) return value.join(' > ');
-  if (value === null || value === undefined) return 'Unknown';
+  if (value === null || value === undefined) return '未知';
   if (typeof value === 'object') return JSON.stringify(value);
   return String(value);
 }
@@ -89,12 +89,12 @@ export default {
     bucketOptions(): { value: string; text: string }[] {
       return this.bucketsStore.buckets.map(b => ({
         value: b.id,
-        text: `${b.id} (${b.type || 'unknown'})`,
+        text: `${b.id} (${b.type || '未知类型'})`,
       }));
     },
     fieldSelectOptions(): { value: string; text: string }[] {
       const options = this.fieldOptions.map(f => ({ value: f, text: f }));
-      options.push({ value: '__custom', text: 'Custom field…' });
+      options.push({ value: '__custom', text: '自定义字段…' });
       return options;
     },
     selectedFieldValue(): string {
@@ -180,7 +180,7 @@ export default {
         console.error(err);
         this.events = [];
         this.fieldOptions = [];
-        this.error = err?.message || 'Failed to load events for the selected watcher.';
+        this.error = err?.message || '加载所选 watcher 的事件失败。';
       } finally {
         this.loading = false;
       }

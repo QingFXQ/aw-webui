@@ -2,17 +2,17 @@
 div
   div.form-group
     select.form-control(v-model="vis_method")
-      option(value="eventlist") Event List
-      option(value="timeline") Timeline
-      option(value="summary") Summary
-      option(value="raw") Raw JSON
+      option(value="eventlist") 事件列表
+      option(value="timeline") 时间线
+      option(value="summary") 汇总
+      option(value="raw") 原始 JSON
 
   div(v-if="vis_method == 'timeline'")
     vis-timeline(:buckets="[{'id': 'search', 'type': 'search', 'events': events}]")
   div(v-if="vis_method == 'eventlist'")
     aw-eventlist(:events="events")
   div(v-if="vis_method == 'summary'")
-    input.form-control(type="text" v-model.lazy.trim="summaryKey" placeholder="data key" style="margin-bottom: 1em;")
+    input.form-control(type="text" v-model.lazy.trim="summaryKey" placeholder="数据字段" style="margin-bottom: 1em;")
     aw-summary(:fields="events", :colorfunc="colorfunc", :namefunc="namefunc")
   div(v-if="vis_method == 'raw'")
     pre {{ events }}

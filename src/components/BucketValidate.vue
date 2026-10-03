@@ -1,74 +1,66 @@
 <template lang="pug">
 div
-  h3 Validate buckets
+  h3 校验存储桶
   p.small
-    | This is a small tool to check the validity of your buckets and their events.
+    | 用于检查存储桶及其中事件数据是否存在异常。
 
-  // Form
   b-row
     b-col
-      h4 Bucket
+      h4 存储桶
       b-form-select(v-model="bucket" :options="buckets" :disabled="buckets.length === 0")
       p.small
-        | Select the bucket to validate.
+        | 选择要校验的存储桶。
       p.small(v-if="events !== null")
-        | Events: {{ events.length }}
+        | 事件数：{{ events.length }}
 
-  // Checks
-  // check for duplicate events
   div(v-if="duplicateEvents !== null")
     details
       summary
         icon.mx-2(name="check", style="color: #0C0", v-if="duplicateEvents.length === 0")
         icon.mx-2(name="exclamation-triangle", style="color: #CC0", v-else)
-        | Duplicates: {{ duplicateEvents.length }}
+        | 重复事件：{{ duplicateEvents.length }}
       div.p-2
         p(v-if="duplicateEvents.length === 0")
-          | No duplicate events found.
+          | 未发现重复事件。
         p(v-else)
-          | The following {{ duplicateEvents.length }} duplicates were found.
+          | 共发现 {{ duplicateEvents.length }} 组重复事件。
           ul.mt-2
             li(v-for="overlap in duplicateEvents")
-              | {{ overlap[0].start.toISOString() }} - (id: {{ overlap[0].event.id }} & {{ overlap[1].event.id }}): {{ JSON.stringify(overlap[0].data) }}
+              | {{ overlap[0].start.toISOString() }} - (ID: {{ overlap[0].event.id }} & {{ overlap[1].event.id }}): {{ JSON.stringify(overlap[0].data) }}
 
-  // check for overlapping events
   div(v-if="overlappingEvents !== null")
     details
       summary
         icon.mx-2(name="check", style="color: #0C0", v-if="overlappingEvents.length === 0")
         icon.mx-2(name="exclamation-triangle", style="color: #CC0", v-else)
-        | Overlaps: {{ overlappingEvents.length }}x with a total duration of {{ overlapDuration / 1000 | friendlyduration }}
+        | 重叠事件：{{ overlappingEvents.length }} 组，总重叠时长 {{ overlapDuration / 1000 | friendlyduration }}
       div.p-2
         p(v-if="overlappingEvents.length === 0")
-          | No overlapping events found.
+          | 未发现重叠事件。
         p(v-else)
-          | The following {{ overlappingEvents.length }} overlaps were found.
+          | 共发现 {{ overlappingEvents.length }} 组重叠事件。
           br
           span(v-if="overlapDurationSameData > 0")
-            | Of these, {{ overlapDurationSameData / 1000 | friendlyduration }} are overlaps where the data is the same. These events could potentially be merged.
+            | 其中有 {{ overlapDurationSameData / 1000 | friendlyduration }} 的重叠事件数据完全相同，这部分事件可能可以安全合并。
           p.mt-2(v-for="event in overlappingEvents")
             ul
-              li {{ event[0].start.toISOString() }}/{{ event[0].end.toISOString() }} - (id: {{ event[0].event.id }}): {{ JSON.stringify(event[0].event.data) }}
-              li {{ event[1].start.toISOString() }}/{{ event[1].end.toISOString() }} - (id: {{ event[1].event.id }}): {{ JSON.stringify(event[1].event.data) }}
+              li {{ event[0].start.toISOString() }}/{{ event[0].end.toISOString() }} - (ID: {{ event[0].event.id }}): {{ JSON.stringify(event[0].event.data) }}
+              li {{ event[1].start.toISOString() }}/{{ event[1].end.toISOString() }} - (ID: {{ event[1].event.id }}): {{ JSON.stringify(event[1].event.data) }}
 
-  // count zero-duration events
   div(v-if="zeroDurationEvents !== null")
     details
       summary
         icon.mx-2(name="check", style="color: #0C0", v-if="zeroDurationEvents.length === 0")
         icon.mx-2(name="info-circle", style="color: #09F", v-else)
-        | Zero-duration events: {{ zeroDurationEvents.length }}
+        | 零时长事件：{{ zeroDurationEvents.length }}
       div.p-2
         p.ml-3(v-if="zeroDurationEvents.length === 0")
-          | No zero-duration events found.
+          | 未发现零时长事件。
         p.ml-3(v-else)
-          | The following {{ zeroDurationEvents.length }} zero-duration events were found:
+          | 共发现 {{ zeroDurationEvents.length }} 个零时长事件：
           ul.mt-2
             li(v-for="event in zeroDurationEvents")
-              | {{ event.timestamp.toISOString() }}/{{ new Date(new Date(event.timestamp).valueOf() + 1000 * event.duration).toISOString() }} - (id: {{ event.id }}): {{ JSON.stringify(event.data) }}
-
-
-  // TODO: check for events that are too long
+              | {{ event.timestamp.toISOString() }}/{{ new Date(new Date(event.timestamp).valueOf() + 1000 * event.duration).toISOString() }} - (ID: {{ event.id }}): {{ JSON.stringify(event.data) }}
 </template>
 
 <script lang="ts">
@@ -116,7 +108,6 @@ export default {
       return overlappingEvents(this.events, this.events);
     },
     overlapDuration() {
-      // The total amount of overlapping time
       if (this.overlappingEvents === null) {
         return null;
       }
@@ -127,8 +118,6 @@ export default {
       }, 0);
     },
     overlapDurationSameData() {
-      // like overlapDuration, but only count overlaps where the data is the same
-      // These events could be merged safely (assuming they have no other overlaps)
       if (this.overlappingEvents === null) {
         return null;
       }

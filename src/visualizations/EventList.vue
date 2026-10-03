@@ -9,14 +9,14 @@ div
   )
   b-card.event-container(no-block=true)
     span(slot="header")
-      h4.card-title Events
+      h4.card-title 事件
       span.pagination-header
-        | Showing {{ displayed_events.length }} events #[span(v-if="events.length > displayed_events.length") (out of {{ events.length }})]
+        | 当前显示 {{ displayed_events.length }} 个事件 #[span(v-if="events.length > displayed_events.length") （共 {{ events.length }} 个）]
       b-button(@click="expandList", size="sm", style="float: right;")
         span(v-if="!isListExpanded")
-          | Expand list
+          | 展开列表
         span(v-else)
-          | Condense list
+          | 收起列表
 
     ul.event-list(:class="{ 'expand': isListExpanded }")
       li(v-for="event in displayed_events")
@@ -34,7 +34,7 @@ div
             span(v-if="editable")
               b-btn.field(@click="() => {editEvent(event)}" variant="outline-dark" size="sm" style="padding: 0 0.2em 0 0.2em")
                 icon(name="edit")
-                | Edit
+                | 编辑
 </template>
 
 <style scoped lang="scss">

@@ -8,20 +8,20 @@ div(v-if="editable || !activityStore.buckets.loaded || has_prerequisites || !set
       template(v-slot:button-content)
         icon(name="cog")
       b-dropdown-item(v-for="t in types" :key="t" variant="outline-secondary" @click="$emit('onTypeChange', id, t)")
-        | {{ visualizations[t].title }} #[span.small.text-warning(v-if="!visualizations[t].available") (no data)]
+        | {{ visualizations[t].title }} #[span.small.text-warning(v-if="!visualizations[t].available") （无数据）]
     b-button.p-0(size="sm", variant="outline-danger" @click="$emit('onRemove', id)")
       icon(name="times")
 
   div(v-if="!supports_period")
     b-alert.small.px-2.py-1(show variant="warning")
-      | This feature doesn't support the current time period.
+      | 当前时间范围暂不支持此可视化。
 
   div(v-if="activityStore.buckets.loaded")
     // Check data prerequisites
     div(v-if="!has_prerequisites")
       b-alert.small.px-2.py-1(show variant="warning")
-        | This feature is missing data from a required watcher.
-        | You can find a list of all watchers in #[a(href="https://docs.activitywatch.net/en/latest/watchers.html") the documentation].
+        | 此可视化缺少所需 watcher 的数据。
+        | 你可以在 #[a(href="https://docs.activitywatch.net/en/latest/watchers.html") 文档] 中查看全部 watcher。
 
     div(v-if="type == 'top_apps'")
       aw-summary(:fields="activityStore.window.top_apps",
@@ -189,7 +189,7 @@ export default {
         return f;
       },
       top_editor_files_hoverfunc: e => {
-        return 'file: ' + e.data.file + '\n' + 'project: ' + e.data.project;
+        return '文件：' + e.data.file + '\n' + '项目：' + e.data.project;
       },
       // TODO: Move this function somewhere else
       top_editor_projects_namefunc: e => {
@@ -206,79 +206,79 @@ export default {
     visualizations: function () {
       return {
         top_apps: {
-          title: 'Top Applications',
+          title: '常用应用',
           available: this.activityStore.window.available || this.activityStore.android.available,
         },
         top_titles: {
-          title: 'Top Window Titles',
+          title: '常用窗口标题',
           available: this.activityStore.window.available,
         },
         top_bundle_ids: {
-          title: 'Bundle IDs',
+          title: 'Bundle ID',
           available: this.activityStore.ios.available,
         },
         top_domains: {
-          title: 'Top Browser Domains',
+          title: '常用浏览器域名',
           available: this.activityStore.browser.available,
         },
         top_urls: {
-          title: 'Top Browser URLs',
+          title: '常用浏览器网址',
           available: this.activityStore.browser.available,
         },
         top_browser_titles: {
-          title: 'Top Browser Titles',
+          title: '常用浏览器标题',
           available: this.activityStore.browser.available,
         },
         top_editor_files: {
-          title: 'Top Editor Files',
+          title: '常用编辑器文件',
           available: this.activityStore.editor.available,
         },
         top_editor_languages: {
-          title: 'Top Editor Languages',
+          title: '常用编辑器语言',
           available: this.activityStore.editor.available,
         },
         top_editor_projects: {
-          title: 'Top Editor Projects',
+          title: '常用编辑器项目',
           available: this.activityStore.editor.available,
         },
         top_categories: {
-          title: 'Top Categories',
+          title: '主要分类',
           available: this.activityStore.category.available,
         },
         category_tree: {
-          title: 'Category Tree',
+          title: '分类树',
           available: this.activityStore.category.available,
         },
         category_sunburst: {
-          title: 'Category Sunburst',
+          title: '分类旭日图',
           available: this.activityStore.category.available,
         },
         timeline_barchart: {
-          title: 'Timeline (barchart)',
+          title: '时间线（柱状图）',
           available: true,
         },
         sunburst_clock: {
-          title: 'Sunburst clock',
+          title: '旭日时钟',
           available: this.activityStore.window.available && this.activityStore.active.available,
         },
         vis_timeline: {
-          title: 'Daily Timeline (Chronological)',
+          title: '每日时间线（按时间顺序）',
           available: true,
         },
         custom_vis: {
-          title: 'Custom Visualization',
+          title: '自定义可视化',
           available: true, // TODO: Implement
         },
         score: {
-          title: 'Score',
+          title: '评分',
           available: this.activityStore.category.available,
         },
         top_stopwatches: {
-          title: 'Top Stopwatch Events',
+          title: '秒表事件排行',
           available: this.activityStore.stopwatch.available,
         },
         top_bucket_data: {
-          title: 'Top Bucket Data',
+          title: '存储桶数据排行',
           available: true,
         },
       };
@@ -306,7 +306,7 @@ export default {
         });
 
         return {
-          name: 'All',
+          name: '全部',
           children: build_category_hierarchy(categories).map(c => pick_subname_as_name(c)),
         };
       } else {

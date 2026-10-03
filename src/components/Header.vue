@@ -6,24 +6,29 @@ div(:class="{'fixed-top-padding': fixedTopMenu}")
       b-navbar-brand(to="/" style="background-color: transparent;")
         img.aligh-middle(src="/logo.png" style="height: 1.5em;")
         span.ml-2.align-middle(style="font-size: 1em; color: #000;") {{ $t('app.name') }}
-        b-badge.ml-2.align-middle(v-if="researchEdition" variant="info" data-testid="research-edition-badge") {{ $t('app.researchEdition') }}
+        b-badge.ml-2.align-middle(v-if="researchEdition" variant="info" data-testid="research-edition-badge") 研究版
 
     b-navbar-toggle(target="nav-collapse")
 
     b-collapse#nav-collapse(is-nav)
       b-navbar-nav
-        // If only a single view (the default) is available
+        b-nav-item(to="/home")
+          div.px-2.px-lg-1
+            icon(name="home")
+            | 总览
+
+        // If only a single activity view (the default) is available
         b-nav-item(v-if="activityViews && activityViews.length === 1", v-for="view in activityViews", :key="view.name", :to="view.pathUrl")
           div.px-2.px-lg-1
             icon(name="calendar-day")
-            | {{ $t('nav.activity') }}
+            | 活动明细
 
         // If multiple (or no) activity views are available
         b-nav-item-dropdown(v-if="!activityViews || activityViews.length !== 1")
           template(slot="button-content")
             div.d-inline.px-2.px-lg-1
               icon(name="calendar-day")
-              | {{ $t('nav.activity') }}
+              | 活动明细
           b-dropdown-item(v-if="activityViews === null", disabled)
             span.text-muted {{ $t('nav.loading') }}
             br
@@ -42,26 +47,24 @@ div(:class="{'fixed-top-padding': fixedTopMenu}")
         b-nav-item(to="/timeline" style="font-color: #000;")
           div.px-2.px-lg-1
             icon(name="stream")
-            | {{ $t('nav.timeline') }}
-
-        b-nav-item(to="/stopwatch")
-          div.px-2.px-lg-1
-            icon(name="stopwatch")
-            | {{ $t('nav.stopwatch') }}
+            | 时间线
 
       // Brand on large screens (centered)
       b-navbar-nav.abs-center.d-none.d-lg-block
         b-navbar-brand(to="/" style="background-color: transparent;")
           img.ml-0.aligh-middle(src="/logo.png" style="height: 1.5em;")
           span.ml-2.align-middle(style="font-size: 1.0em; color: #000;") {{ $t('app.name') }}
-          b-badge.ml-2.align-middle(v-if="researchEdition" variant="info" data-testid="research-edition-badge") {{ $t('app.researchEdition') }}
+          b-badge.ml-2.align-middle(v-if="researchEdition" variant="info" data-testid="research-edition-badge") 研究版
 
       b-navbar-nav.ml-auto
         b-nav-item-dropdown
           template(slot="button-content")
             div.d-inline.px-2.px-lg-1
               icon(name="tools")
-              | {{ $t('nav.tools') }}
+              | 高级
+          b-dropdown-item(to="/stopwatch")
+            icon(name="stopwatch")
+            | {{ $t('nav.stopwatch') }}
           b-dropdown-item(to="/search")
             icon(name="search")
             | {{ $t('nav.search') }}
@@ -70,10 +73,10 @@ div(:class="{'fixed-top-padding': fixedTopMenu}")
             | {{ $t('nav.workReport') }}
           b-dropdown-item(to="/billing")
             icon(name="dollar-sign")
-            | Billable Hours
+            | 计费时长
           b-dropdown-item(to="/analysis/activity" v-if="devmode")
             icon(name="robot")
-            | {{ $t('nav.aiSummary') }}
+            | AI 总结
           b-dropdown-item(to="/trends" v-if="devmode")
             icon(name="chart-line")
             | {{ $t('nav.trends') }}
@@ -86,21 +89,21 @@ div(:class="{'fixed-top-padding': fixedTopMenu}")
           b-dropdown-item(to="/timespiral" v-if="devmode")
             icon(name="history")
             | {{ $t('nav.timespiral') }}
+          b-dropdown-divider
           b-dropdown-item(to="/query")
             icon(name="code")
             | {{ $t('nav.query') }}
           b-dropdown-item(to="/graph" v-if="devmode")
             icon(name="project-diagram")
             | {{ $t('nav.graph') }}
-
-        b-nav-item(to="/buckets")
-          div.px-2.px-lg-1
+          b-dropdown-item(to="/buckets")
             icon(name="database")
             | {{ $t('nav.rawData') }}
+
         b-nav-item(to="/settings")
           div.px-2.px-lg-1
             icon(name="cog")
-            | {{ $t('nav.settings') }}
+            | 设置
 </template>
 
 <style lang="scss" scoped>
@@ -111,10 +114,10 @@ div(:class="{'fixed-top-padding': fixedTopMenu}")
 
 <script lang="ts">
 // only import the icons you use to reduce bundle size
+import 'vue-awesome/icons/home';
 import 'vue-awesome/icons/calendar-day';
 import 'vue-awesome/icons/briefcase';
 import 'vue-awesome/icons/dollar-sign';
-import 'vue-awesome/icons/calendar-week';
 import 'vue-awesome/icons/stream';
 import 'vue-awesome/icons/database';
 import 'vue-awesome/icons/search';
@@ -128,7 +131,6 @@ import 'vue-awesome/icons/cog';
 import 'vue-awesome/icons/tools';
 import 'vue-awesome/icons/history';
 import 'vue-awesome/icons/project-diagram';
-import 'vue-awesome/icons/ellipsis-h';
 import 'vue-awesome/icons/mobile';
 import 'vue-awesome/icons/desktop';
 import 'vue-awesome/icons/layer-group';
@@ -175,7 +177,7 @@ export default {
     _.each(types_by_host, (types, hostname) => {
       if (types['android']) {
         activityViews.push({
-          name: `${hostname} (Android)`,
+          name: `${hostname}（Android）`,
           hostname: hostname,
           type: 'android',
           pathUrl: `/activity/${formatHostParam([hostname])}`,
