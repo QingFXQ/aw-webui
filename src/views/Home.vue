@@ -5,10 +5,18 @@ div.personal-dashboard
       p.eyebrow.mb-1 ACTIVITYWATCH · PERSONAL
       h2.mb-1 我的电脑时间
       p.text-muted.mb-0 自动统计真实活跃时间，像 Steam 一样看见长期投入。
-    div.d-flex.mt-3.mt-md-0
-      b-button.mr-2(size="sm" variant="outline-secondary" to="/timeline") 时间线
-      b-button.mr-2(size="sm" variant="outline-secondary" :to="advancedActivityPath" :disabled="!hostParam") 高级统计
-      b-button(size="sm" variant="outline-secondary" to="/settings") 设置
+    div.d-flex.flex-wrap.mt-3.mt-md-0
+      b-button.mr-2.mb-2(size="sm" variant="outline-secondary" to="/timeline") 时间线
+      b-button.mr-2.mb-2(size="sm" variant="outline-secondary" :to="advancedActivityPath" :disabled="!hostParam") 高级统计
+      b-button.mr-2.mb-2(size="sm" variant="outline-secondary" to="/settings") 设置
+      b-button.mb-2(size="sm" variant="primary" :disabled="loading" @click="loadDashboard")
+        span(v-if="!loading") 刷新
+        span(v-else) 加载中…
+
+  div.update-line.text-muted.small.mb-3(v-if="lastUpdated")
+    | 最近刷新：{{ lastUpdated }}
+    span.ml-2(v-if="deviceLabel") · {{ deviceLabel }}
+    span.ml-2(v-if="availableHosts.length > 1") · 多设备重叠时间自动去重
 
   b-alert(v-if="error" show variant="danger")
     strong 统计加载失败。
@@ -41,22 +49,44 @@ div.personal-dashboard
       div.col-md-3.mb-3
         div.metric-card.h-100
           div.metric-label 生涯累计
-          div.metric-value(v-if="!lifetimeLoading") {{ formatDuration(summary.lifetime) }}
-          div.metric-value(v-else) …
-          div.metric-subtitle(v-if="!lifetimeLoading") 从最早记录开始
-          div.metric-subtitle(v-else) 后台计算中
+          div.metric-value(v-if="!lifetimeLoading && !lifetimeError") {{ formatDuration(summary.lifetime) }}
+          div.metric-value(v-else-if="lifetimeLoading") …
+          div.metric-value(v-else) —
+          div.metric-subtitle(v-if="!lifetimeLoading && !lifetimeError") 从最早记录开始
+          div.metric-subtitle(v-else-if="lifetimeLoading")
+            | 后台计算中
+            span(v-if="lifetimeProgress.total > 1")  {{ lifetimeProgress.done }}/{{ lifetimeProgress.total }}
+          div.metric-subtitle(v-else) 暂时无法计算
 
     div.row.mb-3
       div.col-lg-7.mb-3
         div.dashboard-panel.h-100
-          div.panel-heading.d-flex.align-items-center.justify-content-between
+          div.panel-heading.d-flex.flex-wrap.align-items-center.justify-content-between
             div
               h4.mb-1 软件排行榜
-              p.text-muted.small.mb-0 本周真实活跃时长
-            span.device-pill {{ deviceLabel }}
+              p.text-muted.small.mb-0 {{ rankingSubtitle }}
+            div.d-flex.align-items-center.mt-2.mt-sm-0
+              b-button-group.mr-2(size="sm")
+                b-button(
+                  variant="outline-secondary"
+                  :pressed="rankingScope === 'week'"
+                  @click="rankingScope = 'week'"
+                ) 本周
+                b-button(
+                  variant="outline-secondary"
+                  :pressed="rankingScope === 'lifetime'"
+                  @click="rankingScope = 'lifetime'"
+                ) 生涯
+              span.device-pill {{ deviceLabel }}
 
-          div.empty-state(v-if="topApps.length === 0") 暂时没有软件活动数据。
-          div.app-row(v-for="(app, index) in topApps" :key="app.name")
+          div.empty-state(v-if="rankingScope === 'lifetime' && lifetimeLoading")
+            | 正在后台计算生涯软件时长
+            span(v-if="lifetimeProgress.total > 1")  · {{ lifetimeProgress.done }}/{{ lifetimeProgress.total }}
+            | …
+          div.empty-state(v-else-if="rankingScope === 'lifetime' && lifetimeError")
+            | 生涯榜暂时不可用：{{ lifetimeError }}
+          div.empty-state(v-else-if="displayedApps.length === 0") 暂时没有软件活动数据。
+          div.app-row(v-else v-for="(app, index) in displayedApps" :key="app.name")
             div.app-rank {{ index + 1 }}
             div.app-info
               div.d-flex.justify-content-between.align-items-baseline
@@ -73,7 +103,7 @@ div.personal-dashboard
 
           div.streak-box.mb-3
             span.streak-number {{ streakLabel }}
-            span.streak-copy 连续投入
+            span.streak-copy 连续投入（近 7 天）
 
           div.trend-chart(v-if="dailyTrend.length")
             div.trend-column(v-for="day in dailyTrend" :key="day.date")
@@ -123,11 +153,24 @@ div.personal-dashboard
 <script lang="ts">
 import moment from 'moment';
 
-import { useActivityStore, QueryOptions } from '~/stores/activity';
+import queries, { MultiQueryParams } from '~/queries';
+import {
+  applyScreentimeNames,
+  screentimeNameMap,
+  useActivityStore,
+} from '~/stores/activity';
 import { useBucketsStore } from '~/stores/buckets';
+import { useCategoryStore } from '~/stores/categories';
 import { useSettingsStore } from '~/stores/settings';
-import { ALL_DEVICES, eligibleMultideviceHosts } from '~/util/multidevice';
+import {
+  ALL_DEVICES,
+  buildMultideviceHostParams,
+  eligibleMultideviceHosts,
+} from '~/util/multidevice';
+import { getClient } from '~/util/awclient';
 import { get_day_start_with_offset, get_today_with_offset } from '~/util/time';
+import { timeperiodToStr } from '~/util/timeperiod';
+import { IEvent } from '~/util/interfaces';
 
 interface RankedItem {
   name: string;
@@ -140,6 +183,24 @@ interface TrendDay {
   duration: number;
 }
 
+interface AggregateResult {
+  duration: number;
+  app_events: IEvent[];
+  cat_events: IEvent[];
+  active_events: IEvent[];
+  title_events?: IEvent[];
+}
+
+const EMPTY_AGGREGATE: AggregateResult = {
+  duration: 0,
+  app_events: [],
+  cat_events: [],
+  active_events: [],
+  title_events: [],
+};
+
+const WEEKDAY_ZH = ['', '一', '二', '三', '四', '五', '六', '日'];
+
 export default {
   name: 'Home',
   data() {
@@ -147,8 +208,13 @@ export default {
       loading: true,
       lifetimeLoading: false,
       error: '',
+      lifetimeError: '',
+      lifetimeProgress: { done: 0, total: 0 },
       hostParam: '',
       deviceLabel: '',
+      lastUpdated: '',
+      availableHosts: [] as string[],
+      rankingScope: 'week' as 'week' | 'lifetime',
       summary: {
         today: 0,
         week: 0,
@@ -156,11 +222,14 @@ export default {
         lifetime: 0,
       },
       topApps: [] as RankedItem[],
+      lifetimeApps: [] as RankedItem[],
       topCategories: [] as RankedItem[],
       dailyTrend: [] as TrendDay[],
       activityStore: useActivityStore(),
       bucketsStore: useBucketsStore(),
+      categoryStore: useCategoryStore(),
       settingsStore: useSettingsStore(),
+      loadVersion: 0,
     };
   },
   computed: {
@@ -169,13 +238,21 @@ export default {
       return `/activity/${this.hostParam}/day`;
     },
     weekLabel(): string {
-      return `${moment().startOf('isoWeek').format('M月D日')} – 今天`;
+      const startUnit = this.settingsStore.startOfWeek === 'Sunday' ? 'week' : 'isoWeek';
+      return `${moment().startOf(startUnit).format('M月D日')} – 今天`;
     },
     monthLabel(): string {
       return moment().format('YYYY年M月');
     },
+    displayedApps(): RankedItem[] {
+      return this.rankingScope === 'lifetime' ? this.lifetimeApps : this.topApps;
+    },
+    rankingSubtitle(): string {
+      if (this.rankingScope === 'lifetime') return '从最早记录开始累计的软件时长';
+      return '本周真实活跃时长';
+    },
     maxAppDuration(): number {
-      return Math.max(1, ...this.topApps.map((item: RankedItem) => item.duration));
+      return Math.max(1, ...this.displayedApps.map((item: RankedItem) => item.duration));
     },
     maxCategoryDuration(): number {
       return Math.max(1, ...this.topCategories.map((item: RankedItem) => item.duration));
@@ -190,50 +267,153 @@ export default {
         if (this.dailyTrend[i].duration < 60) break;
         streak += 1;
       }
-      return streak === this.dailyTrend.length ? `${streak}+ 天` : `${streak} 天`;
+      return `${streak} 天`;
     },
   },
   async mounted() {
     await this.loadDashboard();
   },
   beforeDestroy() {
-    this.activityStore.reset();
+    this.loadVersion += 1;
+    getClient().abort();
   },
   methods: {
-    makePeriod(startDate: string, days: number): any {
+    makePeriod(startDate: string, days: number) {
       return {
         start: get_day_start_with_offset(startDate, this.settingsStore.startOfDay),
-        length: [Math.max(1, days), 'days'],
+        length: [Math.max(1, days), 'days'] as [number, string],
       };
     },
 
-    async queryPeriod(startDate: string, days: number): Promise<void> {
-      const options: QueryOptions = {
-        host: this.hostParam,
-        timeperiod: this.makePeriod(startDate, days),
-        filter_afk: true,
-        include_audible: true,
-        include_stopwatch: false,
-        skip_active_history: true,
-        force: true,
-        always_active_pattern: this.settingsStore.always_active_pattern,
+    async queryAggregatePeriod(startDate: string, days: number): Promise<AggregateResult> {
+      const timeperiod = this.makePeriod(startDate, days);
+      const period = timeperiodToStr(timeperiod);
+      const categories = this.categoryStore.classes_for_query;
+      const client = getClient();
+
+      if (this.availableHosts.length > 1) {
+        const { host_params, hosts_with_buckets } = buildMultideviceHostParams(
+          this.availableHosts,
+          this.bucketsStore.bucketsWindow,
+          this.bucketsStore.bucketsAFK,
+          this.bucketsStore.bucketsAndroid
+        );
+        const params: MultiQueryParams = {
+          hosts: hosts_with_buckets,
+          filter_afk: true,
+          always_active_pattern: this.settingsStore.always_active_pattern,
+          categories,
+          filter_categories: [],
+          host_params,
+          include_audible: false,
+          bid_browsers: [],
+        };
+        const data = await client.query([period], queries.multideviceQuery(params), {
+          name: 'personalDashboardMulti',
+          verbose: false,
+        });
+        const result = data && data[0] && data[0].window ? data[0].window : EMPTY_AGGREGATE;
+
+        const screentimeBuckets = Object.values(host_params)
+          .filter((p: any) => p.isIos && p.bid_android)
+          .map((p: any) => p.bid_android as string);
+        if (screentimeBuckets.length > 0 && result.app_events) {
+          try {
+            const nameData = await client.query(
+              [period],
+              queries.screentimeNamesQuery(screentimeBuckets),
+              { name: 'personalDashboardScreenTimeNames', verbose: false }
+            );
+            const names: Record<string, string> = {};
+            (nameData || []).forEach((events: IEvent[]) =>
+              Object.assign(names, screentimeNameMap(events || []))
+            );
+            applyScreentimeNames(result.app_events || [], names);
+            applyScreentimeNames(result.title_events || [], names);
+          } catch (e) {
+            console.warn('Dashboard ScreenTime name lookup failed:', e);
+          }
+        }
+
+        return {
+          duration: Number(result.duration || 0),
+          app_events: result.app_events || [],
+          cat_events: result.cat_events || [],
+          active_events: result.active_events || [],
+          title_events: result.title_events || [],
+        };
+      }
+
+      const host = this.availableHosts[0];
+      const windowBuckets = this.bucketsStore.bucketsWindow(host);
+      const afkBuckets = this.bucketsStore.bucketsAFK(host);
+      const androidBuckets = this.bucketsStore.bucketsAndroid(host);
+
+      if (windowBuckets.length > 0 && afkBuckets.length > 0) {
+        const params = {
+          bid_window: windowBuckets[0],
+          bid_afk: afkBuckets[0],
+          // Dashboard only needs app/category totals, so skip browser-domain work.
+          bid_browsers: [],
+          filter_afk: true,
+          include_audible: false,
+          categories,
+          filter_categories: [],
+          always_active_pattern: this.settingsStore.always_active_pattern,
+        };
+        const data = await client.query([period], queries.fullDesktopQuery(params), {
+          name: 'personalDashboardDesktop',
+          verbose: false,
+        });
+        const result = data && data[0] && data[0].window ? data[0].window : EMPTY_AGGREGATE;
+        return {
+          duration: Number(result.duration || 0),
+          app_events: result.app_events || [],
+          cat_events: result.cat_events || [],
+          active_events: result.active_events || [],
+          title_events: result.title_events || [],
+        };
+      }
+
+      const iosBucket = androidBuckets.find((id: string) => id.startsWith('aw-import-screentime'));
+      const selectedBucket = iosBucket || androidBuckets[0];
+      if (!selectedBucket) return { ...EMPTY_AGGREGATE };
+
+      const data = await client.query(
+        [period],
+        queries.appQuery(selectedBucket, categories, [], !!iosBucket),
+        { name: 'personalDashboardMobile', verbose: false }
+      );
+      const result = data && data[0] ? data[0] : EMPTY_AGGREGATE;
+
+      if (iosBucket && result.title_events && result.app_events) {
+        const names = screentimeNameMap(result.title_events || []);
+        applyScreentimeNames(result.app_events || [], names);
+        applyScreentimeNames(result.title_events || [], names);
+      }
+
+      return {
+        duration: Number(result.duration || 0),
+        app_events: result.app_events || [],
+        cat_events: result.cat_events || [],
+        active_events: result.active_events || [],
+        title_events: result.title_events || [],
       };
-      await this.activityStore.ensure_loaded(options);
     },
 
-    snapshotApps(): RankedItem[] {
-      return (this.activityStore.window.top_apps || [])
-        .map((event: any) => ({
+    snapshotApps(events: IEvent[], limit = 10): RankedItem[] {
+      return (events || [])
+        .map((event: IEvent) => ({
           name: event.data && event.data.app ? String(event.data.app) : '未知应用',
           duration: Number(event.duration || 0),
         }))
         .filter((item: RankedItem) => item.duration > 0)
-        .slice(0, 10);
+        .slice(0, limit);
     },
 
-    snapshotCategories(): RankedItem[] {
-      return (this.activityStore.category.top || [])
-        .map((event: any) => {
+    snapshotCategories(events: IEvent[]): RankedItem[] {
+      return (events || [])
+        .map((event: IEvent) => {
           const raw = event.data ? event.data['$category'] : null;
           const name = Array.isArray(raw) ? raw.join(' › ') : raw ? String(raw) : '未分类';
           return { name, duration: Number(event.duration || 0) };
@@ -242,12 +422,76 @@ export default {
         .slice(0, 8);
     },
 
+    canSplitActiveEvents(): boolean {
+      if (this.availableHosts.length > 1) return true;
+      const host = this.availableHosts[0];
+      return (
+        this.bucketsStore.bucketsWindow(host).length > 0 &&
+        this.bucketsStore.bucketsAFK(host).length > 0
+      );
+    },
+
+    durationForDay(events: IEvent[], date: string): number {
+      const start = moment(get_day_start_with_offset(date, this.settingsStore.startOfDay));
+      const end = start.clone().add(1, 'day');
+      const startMs = start.valueOf();
+      const endMs = end.valueOf();
+
+      return (events || []).reduce((total: number, event: IEvent) => {
+        const eventStart = moment(event.timestamp).valueOf();
+        const eventEnd = eventStart + Number(event.duration || 0) * 1000;
+        const overlap = Math.max(0, Math.min(endMs, eventEnd) - Math.max(startMs, eventStart));
+        return total + overlap / 1000;
+      }, 0);
+    },
+
+    trendFromActiveEvents(events: IEvent[], today: string): TrendDay[] {
+      const trend: TrendDay[] = [];
+      for (let offset = 6; offset >= 0; offset -= 1) {
+        const date = moment(today).subtract(offset, 'days').format('YYYY-MM-DD');
+        const weekday = moment(date).isoWeekday();
+        trend.push({
+          date,
+          label: `周${WEEKDAY_ZH[weekday]}`,
+          duration: this.durationForDay(events, date),
+        });
+      }
+      return trend;
+    },
+
+    async loadTrend(today: string): Promise<TrendDay[]> {
+      const start = moment(today).subtract(6, 'days').format('YYYY-MM-DD');
+
+      if (this.canSplitActiveEvents()) {
+        const result = await this.queryAggregatePeriod(start, 7);
+        return this.trendFromActiveEvents(result.active_events, today);
+      }
+
+      const trend: TrendDay[] = [];
+      for (let offset = 6; offset >= 0; offset -= 1) {
+        const date = moment(today).subtract(offset, 'days').format('YYYY-MM-DD');
+        const result = await this.queryAggregatePeriod(date, 1);
+        const weekday = moment(date).isoWeekday();
+        trend.push({
+          date,
+          label: `周${WEEKDAY_ZH[weekday]}`,
+          duration: result.duration,
+        });
+      }
+      return trend;
+    },
+
     async loadDashboard(): Promise<void> {
+      const version = ++this.loadVersion;
       this.loading = true;
       this.error = '';
+      this.lifetimeError = '';
+      this.rankingScope = 'week';
+
       try {
         await this.settingsStore.ensureLoaded();
         await this.bucketsStore.ensureLoaded();
+        this.categoryStore.load();
 
         const eligibleHosts = eligibleMultideviceHosts(
           this.bucketsStore.hosts,
@@ -256,8 +500,12 @@ export default {
           this.bucketsStore.bucketsAndroid
         );
 
+        if (version !== this.loadVersion) return;
+
+        this.availableHosts = eligibleHosts;
         if (eligibleHosts.length === 0) {
           this.hostParam = '';
+          this.deviceLabel = '';
           return;
         }
 
@@ -267,32 +515,29 @@ export default {
 
         const today = get_today_with_offset(this.settingsStore.startOfDay);
 
-        await this.queryPeriod(today, 1);
-        this.summary.today = this.activityStore.active.duration || 0;
+        const todayResult = await this.queryAggregatePeriod(today, 1);
+        if (version !== this.loadVersion) return;
+        this.summary.today = todayResult.duration;
 
-        const weekStart = moment(today).startOf('isoWeek').format('YYYY-MM-DD');
+        const startUnit = this.settingsStore.startOfWeek === 'Sunday' ? 'week' : 'isoWeek';
+        const weekStart = moment(today).startOf(startUnit).format('YYYY-MM-DD');
         const weekDays = moment(today).diff(moment(weekStart), 'days') + 1;
-        await this.queryPeriod(weekStart, weekDays);
-        this.summary.week = this.activityStore.active.duration || 0;
-        this.topApps = this.snapshotApps();
-        this.topCategories = this.snapshotCategories();
+        const weekResult = await this.queryAggregatePeriod(weekStart, weekDays);
+        if (version !== this.loadVersion) return;
+        this.summary.week = weekResult.duration;
+        this.topApps = this.snapshotApps(weekResult.app_events);
+        this.topCategories = this.snapshotCategories(weekResult.cat_events);
 
         const monthStart = moment(today).startOf('month').format('YYYY-MM-DD');
         const monthDays = moment(today).diff(moment(monthStart), 'days') + 1;
-        await this.queryPeriod(monthStart, monthDays);
-        this.summary.month = this.activityStore.active.duration || 0;
+        const monthResult = await this.queryAggregatePeriod(monthStart, monthDays);
+        if (version !== this.loadVersion) return;
+        this.summary.month = monthResult.duration;
 
-        const trend: TrendDay[] = [];
-        for (let offset = 6; offset >= 0; offset -= 1) {
-          const date = moment(today).subtract(offset, 'days').format('YYYY-MM-DD');
-          await this.queryPeriod(date, 1);
-          trend.push({
-            date,
-            label: moment(date).format('dd'),
-            duration: this.activityStore.active.duration || 0,
-          });
-        }
-        this.dailyTrend = trend;
+        this.dailyTrend = await this.loadTrend(today);
+        if (version !== this.loadVersion) return;
+
+        this.lastUpdated = moment().format('HH:mm');
       } catch (e) {
         const message = e instanceof Error ? e.message : String(e);
         if (message !== 'canceled') {
@@ -300,27 +545,79 @@ export default {
           this.error = message;
         }
       } finally {
-        this.loading = false;
+        if (version === this.loadVersion) {
+          this.loading = false;
+        }
       }
 
-      if (this.hostParam) {
-        this.loadLifetime();
+      if (version === this.loadVersion && this.hostParam) {
+        this.loadLifetime(version);
       }
     },
 
-    async loadLifetime(): Promise<void> {
+    async loadLifetime(version: number): Promise<void> {
       this.lifetimeLoading = true;
+      this.lifetimeError = '';
+      this.lifetimeProgress = { done: 0, total: 0 };
+
       try {
         const today = get_today_with_offset(this.settingsStore.startOfDay);
         const result = await this.activityStore.get_earliest_date(this.hostParam);
+        if (version !== this.loadVersion) return;
+
         const earliest = result && result.date ? result.date : today;
-        const days = moment(today).diff(moment(earliest), 'days') + 1;
-        await this.queryPeriod(earliest, days);
-        this.summary.lifetime = this.activityStore.active.duration || 0;
+        const endExclusive = moment(today).add(1, 'day');
+        let cursor = moment(earliest);
+        const chunks: { start: string; days: number }[] = [];
+
+        // Keep lifetime requests bounded. 92 days matches ActivityWatch's own
+        // long-range day-resolution threshold and stays comfortably below the
+        // server's request timeout on typical local databases.
+        while (cursor.isBefore(endExclusive)) {
+          const next = moment.min(cursor.clone().add(92, 'days'), endExclusive.clone());
+          const days = Math.max(1, next.diff(cursor, 'days'));
+          chunks.push({ start: cursor.format('YYYY-MM-DD'), days });
+          cursor = next;
+        }
+
+        this.lifetimeProgress = { done: 0, total: chunks.length };
+
+        let totalDuration = 0;
+        const appTotals = new Map<string, number>();
+
+        for (const chunk of chunks) {
+          if (version !== this.loadVersion) return;
+
+          const aggregate = await this.queryAggregatePeriod(chunk.start, chunk.days);
+          totalDuration += aggregate.duration;
+
+          for (const app of this.snapshotApps(aggregate.app_events, 100)) {
+            appTotals.set(app.name, (appTotals.get(app.name) || 0) + app.duration);
+          }
+
+          this.lifetimeProgress = {
+            done: this.lifetimeProgress.done + 1,
+            total: chunks.length,
+          };
+        }
+
+        if (version !== this.loadVersion) return;
+
+        this.summary.lifetime = totalDuration;
+        this.lifetimeApps = Array.from(appTotals.entries())
+          .map(([name, duration]) => ({ name, duration }))
+          .sort((a, b) => b.duration - a.duration)
+          .slice(0, 10);
       } catch (e) {
-        console.warn('Lifetime total unavailable:', e);
+        const message = e instanceof Error ? e.message : String(e);
+        if (message !== 'canceled') {
+          console.warn('Lifetime total unavailable:', e);
+          this.lifetimeError = message;
+        }
       } finally {
-        this.lifetimeLoading = false;
+        if (version === this.loadVersion) {
+          this.lifetimeLoading = false;
+        }
       }
     },
 
@@ -371,6 +668,10 @@ export default {
   opacity: 0.58;
 }
 
+.update-line {
+  min-height: 1.25rem;
+}
+
 .metric-card,
 .dashboard-panel {
   border: 1px solid rgba(127, 127, 127, 0.2);
@@ -418,6 +719,7 @@ export default {
   background: rgba(127, 127, 127, 0.12);
   color: #747980;
   font-size: 0.76rem;
+  white-space: nowrap;
 }
 
 .app-row {
@@ -582,6 +884,10 @@ export default {
 
   .trend-chart {
     gap: 0.2rem;
+  }
+
+  .device-pill {
+    display: none;
   }
 }
 </style>
