@@ -1,33 +1,49 @@
-# Personal Dashboard
+# Personal Software Library
 
-This fork keeps ActivityWatch's collectors, AFK detection, storage, categorization, sync model, and query semantics intact while replacing the default landing experience with a simpler personal statistics dashboard.
+This fork keeps ActivityWatch's collectors, AFK detection, storage, categorization, sync model, and query semantics intact while replacing the default landing experience with a simpler personal software-usage library.
+
+The current visual direction is a compact, dark, consumer-style software list inspired by the information density of game libraries and apps such as 小黑盒. It is intentionally not a literal clone of Steam or any single product.
 
 ## Counting rule
 
-The personal dashboard currently reports foreground application activity with AFK time filtered out.
+The personal home currently reports foreground application activity with AFK time filtered out.
 
 - Desktop: foreground window events intersected with non-AFK periods.
 - Multiple devices: ActivityWatch's existing multi-device query is used; overlapping events are resolved with `union_no_overlap`, so simultaneous use is not blindly summed.
 - Android / ScreenTime-only devices: app-usage events are treated as active because those sources do not provide desktop-style AFK buckets.
-- Audible browser activity is not added as active time on the personal dashboard. The advanced Activity page keeps the upstream controls for that behavior.
-- Stopwatch sessions are not mixed into the personal dashboard totals.
+- Audible browser activity is not added as active time on the personal home. The advanced Activity page keeps the upstream controls for that behavior.
+- Stopwatch sessions are not mixed into the personal home totals.
 
-The dashboard must not silently change these rules. If the definition changes later, update both this document and the UI note.
+The UI must not silently change these rules. If the definition changes later, update both this document and the UI note.
+
+## Home experience
+
+The default `/home` route points to `LibraryHome.vue`, which extends the existing `Home.vue` query/data behavior and changes only the consumer-facing presentation. `Home.vue` remains in the branch as the isolated query-backed implementation and an easy rollback point.
+
+The library prioritizes:
+
+- software identity and icon
+- lifetime time
+- current-period time
+- search
+- sorting
+- compact relative usage bars
+- today / week / month / lifetime summary numbers
+
+Trend charts, categorization, raw buckets, and advanced ActivityWatch controls remain available through secondary routes instead of competing with the main list.
 
 ## Dashboard queries
 
-The landing page intentionally uses the existing aggregate queries directly instead of loading the entire Activity view state machine for every card.
+The underlying home data continues to use the existing aggregate queries directly instead of loading the entire Activity view state machine for every row.
 
 Normal first-screen data:
 
 - today aggregate
 - current week aggregate
 - current month aggregate
-- one 7-day aggregate for the trend on desktop/multi-device sources
+- one 7-day aggregate retained by the underlying Home implementation
 
-Single mobile sources fall back to one query per day for the 7-day trend because their aggregate result does not retain positioned active events.
-
-Lifetime statistics are loaded after the first screen and split into 92-day chunks. This avoids a single large request that can exceed the ActivityWatch server request timeout on a long history.
+Lifetime statistics load after the first screen and are split into 92-day chunks. This avoids a single large request that can exceed the ActivityWatch server request timeout on a long history.
 
 ## Local development against the normal ActivityWatch database
 
@@ -42,6 +58,8 @@ git checkout feat/steam-style-dashboard
 npm ci
 AW_SERVER_URL="'http://localhost:5600'" npm run serve
 ```
+
+The branch name is historical; the product direction is now a broader personal software-library UI.
 
 The development WebUI is served on `http://localhost:27180` by default. The ActivityWatch server may need `cors_origins = http://localhost:27180` in its configuration.
 
@@ -62,7 +80,7 @@ ActivityWatch supports two useful ways to try a custom WebUI build:
 1. Replace the server's WebUI static assets with the `dist/` contents, keeping a backup of the original assets.
 2. With `aw-server-rust`, run the server with `--webpath /path/to/aw-webui/dist` so the custom UI can be tested without copying assets into the installation.
 
-The upstream WebUI README documents both mechanisms. Prefer `--webpath` while iterating because reverting is trivial.
+Prefer `--webpath` while iterating because reverting is trivial.
 
 ## Focused GitHub Actions gate
 
@@ -73,22 +91,19 @@ The upstream WebUI README documents both mechanisms. Prefer `--webpath` while it
 3. `npm run build`
 4. uploads `dist/` as the `activitywatch-personal-webui` artifact
 
-It runs on pushes to `feat/steam-style-dashboard`, pull requests into `master`, and manual dispatch.
-
-If the fork has GitHub Actions disabled, no workflow will start until Actions are enabled for the fork. Do not treat the absence of a run as a successful build.
+It runs on pushes to the feature branch, pull requests into `master`, and manual dispatch.
 
 ## Smoke checklist
 
-Before merging the dashboard branch:
+Before merging the personal UI branch:
 
-- [ ] Dashboard loads with one desktop device.
-- [ ] Dashboard renders a useful empty state with no eligible device.
+- [ ] Library loads with one desktop device.
+- [ ] Empty/no-data state renders without crashing.
 - [ ] Today / week / month totals render and update on refresh.
-- [ ] Weekly app ranking renders.
+- [ ] Software list renders.
+- [ ] Search works.
+- [ ] Sorting by total/current-period/name works.
 - [ ] Lifetime total starts in the background and eventually completes.
-- [ ] Lifetime app ranking can be selected.
-- [ ] 7-day trend renders.
-- [ ] Category totals render when category rules exist.
 - [ ] Timeline and Settings remain reachable.
 - [ ] Multi-device selector can switch between one device and all devices.
 - [ ] All-device total does not blindly double-count overlapping device time.
@@ -97,4 +112,8 @@ Before merging the dashboard branch:
 
 ## Known limitation
 
-Lifetime app ranking combines the app aggregates returned by each 92-day chunk. The upstream aggregate query caps the returned app list per chunk. In an extreme history, an app could rank below that cap in every individual chunk but rank inside the all-time top list after cross-chunk summation. This is intentionally accepted for the personal fork instead of changing a shared upstream query API solely for a low-probability edge case.
+Lifetime app ranking combines the app aggregates returned by each 92-day chunk. The upstream aggregate query caps the returned app list per chunk. In an extreme history, an app could rank below that cap in every individual chunk but rank inside the all-time list after cross-chunk summation. This is intentionally accepted for the personal fork instead of changing a shared upstream query API solely for a low-probability edge case.
+
+## LifeQuest boundary
+
+No LifeQuest integration is part of this phase. This fork does not define LifeQuest data contracts, XP hooks, task settlement, JSON import/export, or cross-device application semantics. Any future integration should begin as a separate explicitly-scoped phase so the current LifeQuest mainline remains unaffected.
