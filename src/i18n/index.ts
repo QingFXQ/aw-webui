@@ -74,7 +74,9 @@ const initialLocale = getInitialLocale();
 
 export const i18n = new VueI18n({
   locale: initialLocale,
-  fallbackLocale: 'zh-CN',
+  // Keep the upstream English fallback for technical/developer-only keys that
+  // have not been localized yet, so the UI never exposes raw translation keys.
+  fallbackLocale: 'en',
   messages: { en, uk, de, ru, 'zh-CN': zhCN, sv },
   silentTranslationWarn: process.env.NODE_ENV === 'production',
 });
