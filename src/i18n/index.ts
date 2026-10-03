@@ -56,7 +56,9 @@ export function getInitialLocale(): AppLocale {
   } catch {
     /* ignore */
   }
-  return detectBrowserLocale() ?? 'en';
+  // This personal fork is Chinese-first. Keep explicit user selections,
+  // but make Simplified Chinese the first-run default regardless of OS locale.
+  return 'zh-CN';
 }
 
 const MOMENT_LOCALE: Record<AppLocale, string> = {
@@ -72,7 +74,7 @@ const initialLocale = getInitialLocale();
 
 export const i18n = new VueI18n({
   locale: initialLocale,
-  fallbackLocale: 'en',
+  fallbackLocale: 'zh-CN',
   messages: { en, uk, de, ru, 'zh-CN': zhCN, sv },
   silentTranslationWarn: process.env.NODE_ENV === 'production',
 });
@@ -80,7 +82,7 @@ export const i18n = new VueI18n({
 moment.locale(MOMENT_LOCALE[initialLocale]);
 
 export function setAppLocale(locale: string): void {
-  const next = isAppLocale(locale) ? locale : 'en';
+  const next = isAppLocale(locale) ? locale : 'zh-CN';
   i18n.locale = next;
   moment.locale(MOMENT_LOCALE[next]);
   document.documentElement.lang = HTML_LANG[next];
