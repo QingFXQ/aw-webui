@@ -2,7 +2,7 @@
 
 ## Project scope
 
-This repository is a personal ActivityWatch WebUI fork focused on a simpler, Chinese-first, Steam-style software-time dashboard.
+This repository is a personal ActivityWatch WebUI fork focused on a simpler, Chinese-first, modern software-time dashboard.
 
 Primary goals:
 
@@ -91,4 +91,4 @@ Default navigation should remain simple:
 
 Advanced/debug/raw-data tools may remain available, but should be grouped under an advanced menu rather than competing with the main workflow.
 
-The dashboard should feel closer to a personal Steam statistics page than an analytics/admin console: clear totals, rankings, trends, accumulated history, and low cognitive load.
+The dashboard should feel like a polished personal consumer product rather than an analytics/admin console: clear totals, rankings, trends, accumulated history, restrained visual hierarchy, and low cognitive load.
