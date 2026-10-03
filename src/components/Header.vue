@@ -6,7 +6,7 @@ div(:class="{'fixed-top-padding': fixedTopMenu}")
       b-navbar-brand(to="/" style="background-color: transparent;")
         img.aligh-middle(src="/logo.png" style="height: 1.5em;")
         span.ml-2.align-middle(style="font-size: 1em; color: #000;") {{ $t('app.name') }}
-        b-badge.ml-2.align-middle(v-if="researchEdition" variant="info" data-testid="research-edition-badge") {{ $t('app.researchEdition') }}
+        b-badge.ml-2.align-middle(v-if="researchEdition" variant="info" data-testid="research-edition-badge") 研究版
 
     b-navbar-toggle(target="nav-collapse")
 
@@ -54,7 +54,7 @@ div(:class="{'fixed-top-padding': fixedTopMenu}")
         b-navbar-brand(to="/" style="background-color: transparent;")
           img.ml-0.aligh-middle(src="/logo.png" style="height: 1.5em;")
           span.ml-2.align-middle(style="font-size: 1.0em; color: #000;") {{ $t('app.name') }}
-          b-badge.ml-2.align-middle(v-if="researchEdition" variant="info" data-testid="research-edition-badge") {{ $t('app.researchEdition') }}
+          b-badge.ml-2.align-middle(v-if="researchEdition" variant="info" data-testid="research-edition-badge") 研究版
 
       b-navbar-nav.ml-auto
         b-nav-item-dropdown
@@ -76,7 +76,7 @@ div(:class="{'fixed-top-padding': fixedTopMenu}")
             | 计费时长
           b-dropdown-item(to="/analysis/activity" v-if="devmode")
             icon(name="robot")
-            | {{ $t('nav.aiSummary') }}
+            | AI 总结
           b-dropdown-item(to="/trends" v-if="devmode")
             icon(name="chart-line")
             | {{ $t('nav.trends') }}
