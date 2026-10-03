@@ -73,7 +73,7 @@ div(:class="{'fixed-top-padding': fixedTopMenu}")
             | {{ $t('nav.workReport') }}
           b-dropdown-item(to="/billing")
             icon(name="dollar-sign")
-            | Billable Hours
+            | 计费时长
           b-dropdown-item(to="/analysis/activity" v-if="devmode")
             icon(name="robot")
             | {{ $t('nav.aiSummary') }}
@@ -177,7 +177,7 @@ export default {
     _.each(types_by_host, (types, hostname) => {
       if (types['android']) {
         activityViews.push({
-          name: `${hostname} (Android)`,
+          name: `${hostname}（Android）`,
           hostname: hostname,
           type: 'android',
           pathUrl: `/activity/${formatHostParam([hostname])}`,
