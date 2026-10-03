@@ -124,8 +124,8 @@ export default {
 
       const notifications: Group = {
         id: 'notifications',
-        label: 'Notifications',
-        help: 'Configure shared aw-notify alert thresholds for Android and desktop.',
+        label: '通知',
+        help: '配置 Android 与桌面端共用的 aw-notify 提醒阈值。',
         components: [{ name: 'AwNotifySettings' }],
       };
 
