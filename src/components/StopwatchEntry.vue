@@ -2,24 +2,24 @@
 div
   div.d-flex.flex-wrap.align-items-center.px-3.py-2.stopwatch-entry
     div.flex-fill.mr-2
-      span #[b {{event.data.label || 'No label'}}]
+      span #[b {{event.data.label || '未命名'}}]
       span.text-muted &nbsp;|&nbsp;
       span(v-if="event.data.running")
-        | Running for #[span(:title="event.timestamp") {{event.data.running ? (now - event.timestamp) / 1000 : event.duration | friendlyduration}}]
-        | &nbsp;(Started {{ event.timestamp | shorttime }})
+        | 已运行 #[span(:title="event.timestamp") {{event.data.running ? (now - event.timestamp) / 1000 : event.duration | friendlyduration}}]
+        | &nbsp;（开始于 {{ event.timestamp | shorttime }}）
       span(v-else)
-        | Started #[span(:title="event.timestamp") {{event.timestamp | friendlytime}}]
-        | &nbsp;({{event.data.running ? (now - event.timestamp) / 1000 : event.duration | friendlyduration}})
+        | 开始于 #[span(:title="event.timestamp") {{event.timestamp | friendlytime}}]
+        | &nbsp;（{{event.data.running ? (now - event.timestamp) / 1000 : event.duration | friendlyduration}}）
     div.stopwatch-entry__actions
       b-button.mx-1(v-if="event.data.running", @click="stop", variant="outline-primary", size="sm")
         icon.ml-0.mr-1(name="stop")
-        | Stop
+        | 停止
       b-button.mx-1(v-if="!event.data.running", @click="$emit('new')", variant="outline-primary", size="sm")
         icon.ml-0.mr-1(name="play")
-        | Start new
+        | 再次开始
       b-button.mx-1(v-b-modal="'edit-modal-' + event.id", variant="outline-dark", size="sm")
         icon.ml-0.mr-1(name="edit")
-        | Edit
+        | 编辑
   event-editor(:event="event", :bucket_id="bucket_id", @save="save", @delete="delete_")
 </template>
 
