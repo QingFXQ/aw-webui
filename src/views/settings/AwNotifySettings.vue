@@ -2,40 +2,40 @@
 div
   div.d-flex.justify-content-between.align-items-center.mb-3
     div
-      h5.mb-1 Activity Notifications
-      small.text-muted Configure aw-notify alerts for Android and desktop
+      h5.mb-1 活动提醒
+      small.text-muted 配置 Android 与桌面端共用的 aw-notify 提醒
     b-btn(@click="save" size="sm" variant="primary" :disabled="saving || loading")
-      | {{ saving ? 'Saving…' : 'Save' }}
+      | {{ saving ? '保存中…' : '保存' }}
 
   b-alert(v-if="error" show variant="danger") {{ error }}
-  b-alert(v-if="success" show variant="success" dismissible @dismissed="success = false") Settings saved.
+  b-alert(v-if="success" show variant="success" dismissible @dismissed="success = false") 设置已保存。
 
   div(v-if="loading")
-    b-spinner(small) Loading…
+    b-spinner(small) 加载中…
 
   div(v-else)
     p.text-muted.small.mb-3
-      | Alerts are checked periodically by aw-notify. Each alert fires a notification when
-      | the accumulated time crosses a threshold. The same config works in Android and aw-tauri.
+      | aw-notify 会定期检查这些提醒。累计时间跨过设定阈值时会触发通知。
+      | 同一份配置可用于 Android 和 aw-tauri。
 
     div(v-if="alerts.length === 0")
-      p.text-muted.font-italic No alerts configured.
+      p.text-muted.font-italic 暂未配置提醒。
 
     b-card.mb-2(v-for="(alert, idx) in alerts" :key="idx")
       div.d-flex.align-items-start
         div.flex-grow-1
-          b-form-group(label="Label" label-cols-sm="3" label-size="sm")
-            b-input(v-model="alert.label" size="sm" placeholder="e.g. Work")
-          b-form-group(label="Category" label-cols-sm="3" label-size="sm")
+          b-form-group(label="名称" label-cols-sm="3" label-size="sm")
+            b-input(v-model="alert.label" size="sm" placeholder="例如：工作")
+          b-form-group(label="分类" label-cols-sm="3" label-size="sm")
             b-input(
               v-model="alert.category"
               size="sm"
               placeholder="All"
             )
             small.form-text.text-muted
-              | Match the category name in your AW categorization rules, or use All for total time.
+              | 与 ActivityWatch 分类规则中的分类名称匹配；使用 All 表示全部时间。
           b-form-group(
-            label="Thresholds"
+            label="阈值"
             label-cols-sm="3"
             label-size="sm"
             :invalid-feedback="thresholdError(alert.thresholdStr)"
@@ -44,18 +44,18 @@ div
             b-input(
               v-model="alert.thresholdStr"
               size="sm"
-              placeholder="e.g. 60, 120, 240"
+              placeholder="例如：60, 120, 240"
               :state="thresholdState(alert.thresholdStr)"
             )
-            small.form-text.text-muted Comma-separated positive whole minutes. A notification fires as each threshold is crossed.
-          b-form-group(label="Type" label-cols-sm="3" label-size="sm")
+            small.form-text.text-muted 使用英文逗号分隔的正整数分钟数；每跨过一个阈值就触发一次通知。
+          b-form-group(label="类型" label-cols-sm="3" label-size="sm")
             b-form-radio-group(v-model="alert.positive" :options="goalOptions" size="sm")
-        b-btn.ml-2(@click="removeAlert(idx)" variant="outline-danger" size="sm" title="Remove alert")
+        b-btn.ml-2(@click="removeAlert(idx)" variant="outline-danger" size="sm" title="删除提醒")
           icon(name="trash")
 
     b-btn.mt-1(@click="addAlert" variant="outline-secondary" size="sm")
       icon(name="plus")
-      |  Add alert
+      |  添加提醒
 </template>
 
 <script lang="ts">
@@ -91,7 +91,7 @@ function dtoToRow(dto: AwNotifyAlert): AlertRow {
 function rowToDto(row: AlertRow): AwNotifyAlert {
   const thresholds = parseThresholds(row.thresholdStr);
   if (!thresholds) {
-    throw new Error('Thresholds must be comma-separated positive whole minutes.');
+    throw new Error('阈值必须是使用英文逗号分隔的正整数分钟数。');
   }
   return {
     label: row.label.trim() || null,
@@ -112,8 +112,8 @@ export default {
       error: '',
       success: false,
       goalOptions: [
-        { text: 'Warning (exceeded limit)', value: false },
-        { text: 'Goal (reached target)', value: true },
+        { text: '警告（超过限制）', value: false },
+        { text: '目标（达到目标）', value: true },
       ],
     };
   },
@@ -135,7 +135,7 @@ export default {
         }
         const config = parseAwNotifyConfig(resp.data);
         if (!config) {
-          throw new Error('The saved aw-notify setting has an unsupported format.');
+          throw new Error('已保存的 aw-notify 设置格式暂不受支持。');
         }
         this.config = config;
         this.alerts = config.alerts.map(dtoToRow);
@@ -143,7 +143,7 @@ export default {
         if (e?.response?.status === 404) {
           this.useDefaults();
         } else {
-          this.error = `Failed to load settings: ${e?.message ?? e}`;
+          this.error = `加载设置失败：${e?.message ?? e}`;
         }
       } finally {
         this.loading = false;
@@ -157,7 +157,7 @@ export default {
       this.error = '';
       this.success = false;
       if (this.alerts.some(row => parseThresholds(row.thresholdStr) === null)) {
-        this.error = 'Thresholds must be comma-separated positive whole minutes.';
+        this.error = '阈值必须是使用英文逗号分隔的正整数分钟数。';
         return;
       }
       this.saving = true;
@@ -169,13 +169,13 @@ export default {
         });
         this.success = true;
       } catch (e: any) {
-        this.error = `Failed to save settings: ${e?.message ?? e}`;
+        this.error = `保存设置失败：${e?.message ?? e}`;
       } finally {
         this.saving = false;
       }
     },
     thresholdError(value: string): string {
-      return parseThresholds(value) === null ? 'Use comma-separated positive whole minutes.' : '';
+      return parseThresholds(value) === null ? '请输入用英文逗号分隔的正整数分钟数。' : '';
     },
     thresholdState(value: string): boolean | null {
       return parseThresholds(value) === null ? false : null;
@@ -193,8 +193,8 @@ export default {
     },
     defaultAlerts(): AlertRow[] {
       return [
-        { label: 'All', category: 'All', thresholdStr: '60, 240, 480', positive: false },
-        { label: '💼 Work', category: 'Work', thresholdStr: '60, 120, 240', positive: true },
+        { label: '全部', category: 'All', thresholdStr: '60, 240, 480', positive: false },
+        { label: '💼 工作', category: 'Work', thresholdStr: '60, 120, 240', positive: true },
       ];
     },
   },
