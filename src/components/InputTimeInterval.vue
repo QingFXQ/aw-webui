@@ -2,9 +2,9 @@
 div
   div
     b-alert(v-if="invalidDaterange", variant="warning", show)
-      | The selected date range is invalid. The second date must be greater or equal to the first date.
+      | 选择的日期范围无效，结束日期必须晚于或等于开始日期。
     b-alert(v-if="daterangeTooLong", variant="warning", show)
-      | The selected date range is too long. The maximum is {{ maxDuration/(24*60*60) }} days.
+      | 选择的日期范围过长，最多可选择 {{ maxDuration/(24*60*60) }} 天。
 
   div.input-time-interval.d-flex.flex-wrap.align-items-start.justify-content-between
     // Two-row grid: labels share a fixed-width column so the Mode toggle
@@ -13,7 +13,7 @@ div
     // active. Previously the label flipped between "Quick range" / "Range"
     // and the inputs shifted horizontally on every toggle.
     div.time-interval-grid
-      label.col-form-label.col-form-label-sm.mb-0(for="time-mode") Mode
+      label.col-form-label.col-form-label-sm.mb-0(for="time-mode") 模式
       b-form-radio-group#time-mode(
         v-model="mode",
         @change="valueChanged",
@@ -23,9 +23,9 @@ div
         :options="modeOptions"
       )
 
-      label.col-form-label.col-form-label-sm.mb-0 Range
+      label.col-form-label.col-form-label-sm.mb-0 范围
       div.d-flex.flex-wrap.align-items-center(v-if="mode == 'last_duration'")
-        div.btn-group(role="group" aria-label="Quick durations")
+        div.btn-group(role="group" aria-label="快速时长")
           template(v-for="(dur, idx) in durations")
             input(
               type="radio"
@@ -38,25 +38,25 @@ div
       div.d-flex.flex-wrap.align-items-center(v-else)
         input.form-control.form-control-sm.mr-1(
           type="date", v-model="start", :max="end || undefined", style="width: auto"
-          aria-label="Start date"
+          aria-label="开始日期"
         )
         input.form-control.form-control-sm.mr-1(
-          type="date", v-model="end", :min="start || undefined", placeholder="(optional)", style="width: auto"
-          aria-label="End date (optional)"
+          type="date", v-model="end", :min="start || undefined", placeholder="（可选）", style="width: auto"
+          aria-label="结束日期（可选）"
         )
         b-button(
           size="sm" variant="outline-dark"
           :disabled="invalidDaterange || emptyDaterange || daterangeTooLong"
           @click="applyRange"
-        ) Apply
+        ) 应用
 
     div.text-right.d-none.d-md-block(v-if="showUpdate")
       b-button.px-2(@click="refresh()", variant="outline-dark", size="sm")
         icon.mr-1(name="sync")
         span.d-none.d-md-inline
-          | Refresh
+          | 刷新
       div.mt-2.small.text-muted(v-if="lastUpdate")
-        | Last update: #[time(:datetime="lastUpdate.format()") {{lastUpdate | friendlytime}}]
+        | 最近更新：#[time(:datetime="lastUpdate.format()") {{lastUpdate | friendlytime}}]
 </template>
 
 <style scoped lang="scss">
@@ -121,20 +121,20 @@ export default {
       end: null,
       lastUpdate: null,
       durations: [
-        { seconds: 0.25 * 60 * 60, label: '&frac14;h' },
-        { seconds: 0.5 * 60 * 60, label: '&frac12;h' },
-        { seconds: 60 * 60, label: '1h' },
-        { seconds: 2 * 60 * 60, label: '2h' },
-        { seconds: 3 * 60 * 60, label: '3h' },
-        { seconds: 4 * 60 * 60, label: '4h' },
-        { seconds: 6 * 60 * 60, label: '6h' },
-        { seconds: 12 * 60 * 60, label: '12h' },
-        { seconds: 24 * 60 * 60, label: '24h' },
-        { seconds: 48 * 60 * 60, label: '48h' },
+        { seconds: 0.25 * 60 * 60, label: '&frac14; 小时' },
+        { seconds: 0.5 * 60 * 60, label: '&frac12; 小时' },
+        { seconds: 60 * 60, label: '1 小时' },
+        { seconds: 2 * 60 * 60, label: '2 小时' },
+        { seconds: 3 * 60 * 60, label: '3 小时' },
+        { seconds: 4 * 60 * 60, label: '4 小时' },
+        { seconds: 6 * 60 * 60, label: '6 小时' },
+        { seconds: 12 * 60 * 60, label: '12 小时' },
+        { seconds: 24 * 60 * 60, label: '24 小时' },
+        { seconds: 48 * 60 * 60, label: '48 小时' },
       ],
       modeOptions: [
-        { text: 'Last duration', value: 'last_duration' },
-        { text: 'Date range', value: 'range' },
+        { text: '最近时长', value: 'last_duration' },
+        { text: '日期范围', value: 'range' },
       ],
     };
   },
