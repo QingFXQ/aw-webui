@@ -30,10 +30,12 @@ div.personal-dashboard
         span(v-if="!loading") 刷新
         span(v-else) 加载中…
 
-  div.update-line.text-muted.small.mb-3(v-if="lastUpdated")
+  div.update-line.text-muted.small.mb-2(v-if="lastUpdated")
     | 最近刷新：{{ lastUpdated }}
     span.ml-2(v-if="deviceLabel") · {{ deviceLabel }}
     span.ml-2(v-if="currentHosts.length > 1") · 多设备重叠时间自动去重
+  div.text-muted.small.mb-3(v-if="hostParam && !loading")
+    | 统计口径：前台软件活跃时间，排除 AFK；后台纯音频不计入。
 
   b-alert(v-if="error" show variant="danger")
     strong 统计加载失败。
@@ -524,11 +526,22 @@ export default {
     },
 
     async loadDashboard(): Promise<void> {
+      // Stop an older background lifetime query before refreshing or switching devices.
+      if (this.loadVersion > 0) {
+        getClient().abort();
+      }
+
       const version = ++this.loadVersion;
       this.loading = true;
       this.error = '';
       this.lifetimeError = '';
       this.rankingScope = 'week';
+      this.summary = { today: 0, week: 0, month: 0, lifetime: 0 };
+      this.topApps = [];
+      this.lifetimeApps = [];
+      this.topCategories = [];
+      this.dailyTrend = [];
+      this.lifetimeProgress = { done: 0, total: 0 };
 
       try {
         await this.settingsStore.ensureLoaded();
@@ -595,7 +608,7 @@ export default {
         }
       }
 
-      if (version === this.loadVersion && this.hostParam) {
+      if (version === this.loadVersion && this.hostParam && !this.error) {
         this.loadLifetime(version);
       }
     },
