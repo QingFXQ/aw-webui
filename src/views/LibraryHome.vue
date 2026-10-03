@@ -244,7 +244,10 @@ export default {
 
     shareFor(app: LibraryItem): number {
       if (!this.periodTotal) return 0;
-      return Math.max(0, Math.min(100, Math.round((this.periodDurationFor(app) / this.periodTotal) * 100)));
+      return Math.max(
+        0,
+        Math.min(100, Math.round((this.periodDurationFor(app) / this.periodTotal) * 100))
+      );
     },
 
     appAccent(name: string): string {
