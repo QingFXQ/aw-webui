@@ -1,59 +1,59 @@
 <template lang="pug">
 div
-  h3 Graph
+  h3 图谱
 
   b-alert(show variant="warning")
-    | This feature is still in early development. See PR #[a(href="https://github.com/ActivityWatch/aw-webui/pull/365") aw-webui#365] for more information.
+    | 此功能仍处于早期开发阶段。更多信息请参阅 PR #[a(href="https://github.com/ActivityWatch/aw-webui/pull/365") aw-webui#365]。
 
-  p Displays a graph of categories and their transitions.
+  p 以图谱形式展示分类以及分类之间的切换关系。
 
   b-alert(v-if="error" show variant="danger")
     | {{error}}
 
   // Specify max category depth
-  b-form-group(label="Max category depth")
+  b-form-group(label="最大分类深度")
     b-form-input(v-model="maxDepth" type="number" min="1")
 
   // Toggle to exclude uncategorized
-  b-form-group(label="Exclude uncategorized")
+  b-form-group(label="排除未分类活动")
     b-form-checkbox(v-model="excludeUncategorized")
 
   div.d-flex
     span.mr-auto
     b-button(type="button", @click="generate()" variant="success")
       icon(name="search")
-      | Generate
+      | 生成
 
   div.d-flex.mt-1
-    span.mr-auto.small.text-muted Hostname: {{queryOptions.hostname}}
+    span.mr-auto.small.text-muted 主机：{{queryOptions.hostname}}
     b-button.border-0(size="sm", variant="outline-dark" @click="show_options = !show_options")
       span(v-if="!show_options")
-        | #[icon(name="angle-double-down")] Show options
+        | #[icon(name="angle-double-down")] 显示选项
       span(v-else)
-        | #[icon(name="angle-double-up")] Hide options
+        | #[icon(name="angle-double-up")] 收起选项
 
   div(v-show="show_options")
-    h4 Options
+    h4 选项
     aw-query-options(v-model="queryOptions")
 
   div(v-if="status == 'searching'")
-    div #[icon(name="spinner" pulse)] Searching...
+    div #[icon(name="spinner" pulse)] 正在生成…
 
 
   div(v-if="events != null")
     hr
 
     div
-        | Found {{ events.length }} events in {{ queryTime / 1000 }} seconds
+        | 在 {{ queryTime / 1000 }} 秒内找到 {{ events.length }} 个事件
 
     aw-force-graph(:data="graphdata")
 
     hr
 
     div
-      | Didn't find what you were looking for?
+      | 没找到想要的内容？
       br
-      | Add a week to the search: #[b-button(size="sm" variant="outline-dark" @click="extendByWeek()") +1 week]
+      | 将搜索范围向前扩展一周：#[b-button(size="sm" variant="outline-dark" @click="extendByWeek()") +1 周]
 </template>
 
 <style scoped lang="scss"></style>
