@@ -207,11 +207,7 @@ div.personal-dashboard
 import moment from 'moment';
 
 import queries, { MultiQueryParams } from '~/queries';
-import {
-  applyScreentimeNames,
-  screentimeNameMap,
-  useActivityStore,
-} from '~/stores/activity';
+import { applyScreentimeNames, screentimeNameMap, useActivityStore } from '~/stores/activity';
 import { useBucketsStore } from '~/stores/buckets';
 import { useCategoryStore } from '~/stores/categories';
 import { useSettingsStore } from '~/stores/settings';
@@ -549,8 +545,8 @@ export default {
               ? '未分类'
               : raw.join(' › ')
             : raw
-              ? String(raw)
-              : '未分类';
+            ? String(raw)
+            : '未分类';
           return { name, duration: Number(event.duration || 0) };
         })
         .filter((item: RankedItem) => item.duration > 0)

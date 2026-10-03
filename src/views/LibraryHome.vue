@@ -213,9 +213,7 @@ export default {
     },
     libraryBarWidth(app: LibraryItem): number {
       const duration =
-        this.rankingScope === 'lifetime'
-          ? this.totalDurationFor(app)
-          : this.periodDurationFor(app);
+        this.rankingScope === 'lifetime' ? this.totalDurationFor(app) : this.periodDurationFor(app);
       return Math.max(2, Math.round((duration / this.libraryMaxDuration) * 100));
     },
   },
