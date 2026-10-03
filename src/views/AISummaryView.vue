@@ -1,24 +1,24 @@
 <template lang="pug">
 div
-  h3.mb-3 AI Activity Summary
+  h3.mb-3 AI 活动总结
 
   b-alert(variant="info" show)
-    | Your API key is kept only in this page's memory and sent directly to the LLM provider.
-    |  It is cleared when the page reloads and ActivityWatch does not receive it.
-    |  For deeper analysis with agents, see the
-    |  #[a(href="https://docs.activitywatch.net/en/latest/examples/agents-and-ai.html") ActivityWatch agents and AI guide].
+    | API Key 只保存在当前页面的内存中，并直接发送给所选 LLM 服务商。
+    | 页面刷新后会被清除，ActivityWatch 不会接收它。
+    | 如需使用 Agent 进行更深入的分析，请参阅
+    | #[a(href="https://docs.activitywatch.net/en/latest/examples/agents-and-ai.html") ActivityWatch Agent 与 AI 指南]。
 
   div.row.mb-3
     div.col-md-4
-      b-form-group(label="Host" label-class="font-weight-bold")
+      b-form-group(label="设备" label-class="font-weight-bold")
         b-form-select(v-model="selectedHost" :options="hostOptions")
 
     div.col-md-4
-      b-form-group(label="Date Range" label-class="font-weight-bold")
+      b-form-group(label="日期范围" label-class="font-weight-bold")
         b-form-select(v-model="dateRange" :options="dateRangeOptions")
 
     div.col-md-4
-      b-form-group(label="LLM Provider" label-class="font-weight-bold")
+      b-form-group(label="LLM 服务商" label-class="font-weight-bold")
         b-form-select(v-model="provider" :options="providerOptions" @change="onProviderChange")
 
   div.row.mb-3
@@ -33,36 +33,35 @@ div
         )
 
     div.col-md-6
-      b-form-group(label="Model" label-class="font-weight-bold")
-        b-form-input(v-model="model" placeholder="e.g. gpt-4o-mini" @blur="persistConfig")
+      b-form-group(label="模型" label-class="font-weight-bold")
+        b-form-input(v-model="model" placeholder="例如 gpt-4o-mini" @blur="persistConfig")
 
   div.mb-3
-    b-form-group(label="Privacy" label-class="font-weight-bold")
+    b-form-group(label="隐私" label-class="font-weight-bold")
       b-form-checkbox(v-model="excludeUncategorized")
-        | Exclude uncategorized activity
+        | 排除未分类活动
       b-form-checkbox(v-model="excludePrivateCategories")
-        | Exclude categories marked private
+        | 排除标记为私密的分类
         span.text-muted.ml-1(v-if="privateCategories.length")
-          | ({{ privateCategories.map(c => c.join(' > ')).join(', ') }})
+          | （{{ privateCategories.map(c => c.join(' > ')).join('，') }}）
         span.text-muted.ml-1(v-else)
-          | (none marked yet — set #[code private: true] in a category's data)
+          | （暂未标记；可在分类 data 中设置 #[code private: true]）
       small.text-muted
-        | Browser domains are omitted entirely while either filter is on, since browser
-        |  events carry no category and cannot be filtered by it.
+        | 开启任一过滤条件时，会完全省略浏览器域名，因为浏览器事件没有分类信息，无法按分类可靠过滤。
 
   div.mb-3
-    b-form-group(label="Prompt" label-class="font-weight-bold")
+    b-form-group(label="提示词" label-class="font-weight-bold")
       b-form-textarea(v-model="userPrompt" rows="3" max-rows="8")
 
   div.mb-4
     b-button(@click="generate" variant="primary" :disabled="loading || !apiKey || !selectedHost")
       b-spinner.mr-2(v-if="loading" small)
-      | {{ loading ? 'Generating…' : 'Generate Summary' }}
+      | {{ loading ? '生成中…' : '生成总结' }}
     b-button.ml-2(
       v-if="aggregatedText"
       variant="outline-secondary"
       @click="dataVisible = !dataVisible"
-    ) {{ dataVisible ? 'Hide context' : 'Show context sent' }}
+    ) {{ dataVisible ? '隐藏上下文' : '查看发送的上下文' }}
 
   b-alert(v-if="error" variant="danger" show dismissible @dismissed="error = ''")
     | {{ error }}
@@ -70,17 +69,17 @@ div
   div(v-if="dataVisible && aggregatedText")
     b-card.mb-3
       template(slot="header")
-        strong Exact context sent to the LLM
+        strong 实际发送给 LLM 的上下文
       pre.mb-0(style="white-space: pre-wrap; font-size: 0.85em") {{ aggregatedText }}
 
   div(v-if="llmResponse")
     b-card
       template(slot="header")
         div.d-flex.justify-content-between.align-items-center
-          strong AI Summary
+          strong AI 总结
           b-button(size="sm" variant="outline-secondary" @click="copyResponse")
             icon(name="copy")
-            |  {{ copied ? 'Copied!' : 'Copy' }}
+            |  {{ copied ? '已复制' : '复制' }}
       div(style="white-space: pre-wrap") {{ llmResponse }}
 </template>
 
@@ -99,8 +98,7 @@ import {
 import 'vue-awesome/icons/copy';
 
 const DEFAULT_PROMPT =
-  'Based on the following activity data, provide a concise summary of how I spent my time. ' +
-  'Highlight the main activities, identify focus areas, and suggest any observations about productivity patterns.';
+  '根据下面的活动数据，简洁总结我的时间都花在了哪里。突出主要活动和专注领域，并指出值得注意的效率或时间分配模式。';
 
 export default {
   name: 'AISummaryView',
@@ -144,9 +142,9 @@ export default {
     },
     dateRangeOptions() {
       return [
-        { value: 'last7d', text: 'Last 7 days' },
-        { value: 'last30d', text: 'Last 30 days' },
-        { value: 'last90d', text: 'Last 90 days' },
+        { value: 'last7d', text: '最近 7 天' },
+        { value: 'last30d', text: '最近 30 天' },
+        { value: 'last90d', text: '最近 90 天' },
       ];
     },
     providerOptions() {
@@ -200,11 +198,11 @@ export default {
       this.aggregatedText = '';
 
       if (!this.selectedHost) {
-        this.error = 'No host with a window-watcher bucket found.';
+        this.error = '没有找到包含 window watcher 数据的设备。';
         return;
       }
       if (!this.apiKey.trim()) {
-        this.error = 'Please enter your LLM API key.';
+        this.error = '请输入 LLM API Key。';
         return;
       }
 
@@ -238,7 +236,7 @@ export default {
       // watcher, so a naive find() could silently select an Android bucket.
       const windowBucketId = this.bucketsStore.bucketsWindow(this.selectedHost)[0];
       if (!windowBucketId) {
-        throw new Error(`No window-watcher bucket found for host: ${this.selectedHost}`);
+        throw new Error(`设备 ${this.selectedHost} 没有找到 window watcher 存储桶。`);
       }
       const afkBucket = buckets.find(
         b => b.type === 'afkstatus' && b.hostname === this.selectedHost
@@ -292,8 +290,7 @@ export default {
       const text = formatActivityContext(context);
       if (browserFallbackUsed) {
         return (
-          'NOTE: browser data comes from bucket(s) whose hostname could not be ' +
-          'resolved ("unknown"), so those domains may belong to a different device.\n' +
+          '注意：浏览器数据来自主机名无法解析（“unknown”）的存储桶，因此这些域名可能来自其他设备。\n' +
           text
         );
       }
@@ -307,7 +304,7 @@ export default {
           this.copied = false;
         }, 2000);
       } catch {
-        this.error = 'Could not copy to clipboard';
+        this.error = '无法复制到剪贴板。';
       }
     },
   },
