@@ -2,9 +2,9 @@
 div.personal-dashboard
   div.dashboard-header.d-flex.flex-wrap.align-items-end.justify-content-between.mb-4
     div
-      p.eyebrow.mb-1 ACTIVITYWATCH · PERSONAL
-      h2.mb-1 我的电脑时间
-      p.text-muted.mb-0 自动统计真实活跃时间，像 Steam 一样看见长期投入。
+      p.eyebrow.mb-1 ACTIVITYWATCH
+      h2.mb-1 使用概览
+      p.text-muted.mb-0 今天做了多久、最常用什么、长期投入到哪一档，一眼看清。
     div.d-flex.flex-wrap.mt-3.mt-md-0
       b-dropdown.mr-2.mb-2(
         v-if="availableHosts.length > 1"
@@ -24,14 +24,14 @@ div.personal-dashboard
           @click="selectHost(host)"
         ) {{ host }}
       b-button.mr-2.mb-2(size="sm" variant="outline-secondary" to="/timeline") 时间线
-      b-button.mr-2.mb-2(size="sm" variant="outline-secondary" :to="advancedActivityPath" :disabled="!hostParam") 高级统计
+      b-button.mr-2.mb-2(size="sm" variant="outline-secondary" :to="advancedActivityPath" :disabled="!hostParam") 详细统计
       b-button.mr-2.mb-2(size="sm" variant="outline-secondary" to="/settings") 设置
       b-button.mb-2(size="sm" variant="primary" :disabled="loading" @click="loadDashboard")
         span(v-if="!loading") 刷新
         span(v-else) 加载中…
 
   div.update-line.text-muted.small.mb-2(v-if="lastUpdated")
-    | 最近刷新：{{ lastUpdated }}
+    | 最近刷新 {{ lastUpdated }}
     span.ml-2(v-if="deviceLabel") · {{ deviceLabel }}
     span.ml-2(v-if="currentHosts.length > 1") · 多设备重叠时间自动去重
   div.text-muted.small.mb-3(v-if="hostParam && !loading")
@@ -49,124 +49,158 @@ div.personal-dashboard
     | 正在整理今天、本周和本月的活动数据…
 
   template(v-else-if="hostParam")
-    div.row.mb-3
-      div.col-md-3.mb-3
-        div.metric-card.h-100
-          div.metric-label 今天
-          div.metric-value {{ formatDuration(summary.today) }}
-          div.metric-subtitle 有效活跃时间
-      div.col-md-3.mb-3
-        div.metric-card.h-100
-          div.metric-label 本周
-          div.metric-value {{ formatDuration(summary.week) }}
-          div.metric-subtitle {{ weekLabel }}
-      div.col-md-3.mb-3
-        div.metric-card.h-100
-          div.metric-label 本月
-          div.metric-value {{ formatDuration(summary.month) }}
-          div.metric-subtitle {{ monthLabel }}
-      div.col-md-3.mb-3
-        div.metric-card.h-100
-          div.metric-label 生涯累计
-          div.metric-value(v-if="!lifetimeLoading && !lifetimeError") {{ formatDuration(summary.lifetime) }}
-          div.metric-value(v-else-if="lifetimeLoading") …
-          div.metric-value(v-else) —
-          div.metric-subtitle(v-if="!lifetimeLoading && !lifetimeError") 从最早记录开始
-          div.metric-subtitle(v-else-if="lifetimeLoading")
-            | 后台计算中
-            span(v-if="lifetimeProgress.total > 1")  {{ lifetimeProgress.done }}/{{ lifetimeProgress.total }}
-          div.metric-subtitle(v-else) 暂时无法计算
+    div.overview-grid.mb-3
+      div.hero-card
+        div.d-flex.align-items-start.justify-content-between
+          div
+            div.hero-kicker 今天
+            div.hero-value {{ formatDuration(summary.today) }}
+            div.hero-subtitle 有效活跃时间
+          span.device-pill(v-if="deviceLabel") {{ deviceLabel }}
 
-    div.row.mb-3
-      div.col-lg-7.mb-3
-        div.dashboard-panel.h-100
-          div.panel-heading.d-flex.flex-wrap.align-items-center.justify-content-between
-            div
-              h4.mb-1 软件排行榜
-              p.text-muted.small.mb-0 {{ rankingSubtitle }}
-            div.d-flex.align-items-center.mt-2.mt-sm-0
-              b-button-group.mr-2(size="sm")
-                b-button(
-                  variant="outline-secondary"
-                  :pressed="rankingScope === 'week'"
-                  @click="rankingScope = 'week'"
-                ) 本周
-                b-button(
-                  variant="outline-secondary"
-                  :pressed="rankingScope === 'lifetime'"
-                  @click="rankingScope = 'lifetime'"
-                ) 生涯
-              span.device-pill {{ deviceLabel }}
+        div.hero-divider
+        div.hero-stats
+          div.hero-stat
+            span 本周
+            strong {{ formatDuration(summary.week) }}
+          div.hero-stat
+            span 本月
+            strong {{ formatDuration(summary.month) }}
+          div.hero-stat
+            span 连续投入
+            strong {{ streakLabel }}
 
-          div.empty-state(v-if="rankingScope === 'lifetime' && lifetimeLoading")
-            | 正在后台计算生涯软件时长
+      div.side-summary
+        div.summary-card
+          div.summary-label 生涯累计
+          div.summary-value(v-if="!lifetimeLoading && !lifetimeError") {{ formatDuration(summary.lifetime) }}
+          div.summary-value(v-else-if="lifetimeLoading") 计算中…
+          div.summary-value(v-else) —
+          div.summary-note(v-if="!lifetimeLoading && !lifetimeError") 从最早记录开始
+          div.summary-note(v-else-if="lifetimeLoading")
+            | 后台整理历史
             span(v-if="lifetimeProgress.total > 1")  · {{ lifetimeProgress.done }}/{{ lifetimeProgress.total }}
-            | …
-          div.empty-state(v-else-if="rankingScope === 'lifetime' && lifetimeError")
-            | 生涯榜暂时不可用：{{ lifetimeError }}
-          div.empty-state(v-else-if="displayedApps.length === 0") 暂时没有软件活动数据。
-          div.app-row(v-else v-for="(app, index) in displayedApps" :key="app.name")
-            div.app-rank {{ index + 1 }}
+          div.summary-note(v-else) 暂时不可用
+
+        div.summary-card
+          div.summary-label 当前周期
+          div.summary-period {{ weekLabel }}
+          div.summary-note {{ monthLabel }}
+
+    div.content-grid.mb-3
+      div.dashboard-panel.apps-panel
+        div.panel-heading.d-flex.flex-wrap.align-items-start.justify-content-between
+          div
+            div.section-kicker 软件使用
+            h4.mb-1 排行
+            p.text-muted.small.mb-0 {{ rankingSubtitle }}
+            p.text-muted.small.mb-0 条长代表当前周期使用量，颜色代表累计使用里程碑。
+          div.d-flex.align-items-center.mt-2.mt-sm-0
+            b-button-group(size="sm")
+              b-button(
+                variant="outline-secondary"
+                :pressed="rankingScope === 'week'"
+                @click="rankingScope = 'week'"
+              ) 本周
+              b-button(
+                variant="outline-secondary"
+                :pressed="rankingScope === 'lifetime'"
+                @click="rankingScope = 'lifetime'"
+              ) 生涯
+
+        div.empty-state(v-if="rankingScope === 'lifetime' && lifetimeLoading")
+          | 正在后台计算生涯软件时长
+          span(v-if="lifetimeProgress.total > 1")  · {{ lifetimeProgress.done }}/{{ lifetimeProgress.total }}
+          | …
+        div.empty-state(v-else-if="rankingScope === 'lifetime' && lifetimeError")
+          | 生涯榜暂时不可用：{{ lifetimeError }}
+        div.empty-state(v-else-if="displayedApps.length === 0") 暂时没有软件活动数据。
+
+        div.app-list(v-else)
+          div.app-row(v-for="(app, index) in displayedApps" :key="app.name")
+            div.app-rank {{ String(index + 1).padStart(2, '0') }}
+            div.app-icon-shell(:style="{ borderColor: usageTierColor(app.name, app.duration) }")
+              span.app-icon-fallback {{ appInitial(app.name) }}
+              img.app-icon(
+                v-if="appIconUrl(app.name)"
+                :src="appIconUrl(app.name)"
+                :alt="app.name"
+                referrerpolicy="no-referrer"
+                @error="onIconError"
+              )
             div.app-info
-              div.d-flex.justify-content-between.align-items-baseline
+              div.app-line
                 strong.app-name {{ app.name }}
                 span.app-duration {{ formatDuration(app.duration) }}
+              div.app-meta(v-if="rankingScope === 'week'")
+                | 累计 {{ compactDuration(appLifetimeDuration(app.name, app.duration)) }}
+                span.ml-2 · {{ usageTierLabel(app.name, app.duration) }}
+              div.app-meta(v-else) {{ usageTierLabel(app.name, app.duration) }}
               div.usage-track
-                div.usage-fill(:style="{ width: appBarWidth(app.duration) + '%' }")
+                div.usage-fill(
+                  :style="{ width: appBarWidth(app.duration) + '%', backgroundColor: usageTierColor(app.name, app.duration) }"
+                )
 
-      div.col-lg-5.mb-3
-        div.dashboard-panel.h-100
-          div.panel-heading
-            h4.mb-1 最近 7 天
-            p.text-muted.small.mb-0 每天真正坐在电脑前投入了多久
+        div.tier-legend.mt-3
+          div.tier-legend-title 累计时长颜色
+          div.tier-items
+            div.tier-item(v-for="tier in usageLegend" :key="tier.label")
+              span.tier-dot(:style="{ backgroundColor: tier.color, borderColor: tier.border || tier.color }")
+              span {{ tier.label }}
 
-          div.streak-box.mb-3
-            span.streak-number {{ streakLabel }}
-            span.streak-copy 连续投入（近 7 天）
+      div.dashboard-panel.trend-panel
+        div.panel-heading
+          div.section-kicker 节奏
+          h4.mb-1 最近 7 天
+          p.text-muted.small.mb-0 每天真正坐在电脑前投入了多久
 
-          div.trend-chart(v-if="dailyTrend.length")
-            div.trend-column(v-for="day in dailyTrend" :key="day.date")
-              div.trend-value {{ compactDuration(day.duration) }}
-              div.trend-bar-wrap
-                div.trend-bar(:style="{ height: trendHeight(day.duration) + '%' }")
-              div.trend-day {{ day.label }}
-          div.empty-state(v-else) 暂时没有趋势数据。
+        div.streak-box.mb-3
+          span.streak-number {{ streakLabel }}
+          span.streak-copy 连续投入（近 7 天）
 
-    div.row
-      div.col-lg-6.mb-3
-        div.dashboard-panel.h-100
-          div.panel-heading
-            h4.mb-1 投入分类
-            p.text-muted.small.mb-0 沿用 ActivityWatch 的分类规则，本周汇总
+        div.trend-chart(v-if="dailyTrend.length")
+          div.trend-column(v-for="day in dailyTrend" :key="day.date")
+            div.trend-value {{ compactDuration(day.duration) }}
+            div.trend-bar-wrap
+              div.trend-bar(:style="{ height: trendHeight(day.duration) + '%' }")
+            div.trend-day {{ day.label }}
+        div.empty-state(v-else) 暂时没有趋势数据。
 
-          div.empty-state(v-if="topCategories.length === 0")
-            | 还没有分类数据。可以去设置里给 Blender、UE、VS Code 等软件建立分类。
-          div.category-row(v-for="category in topCategories" :key="category.name")
-            div.d-flex.justify-content-between
-              span {{ category.name }}
-              strong {{ formatDuration(category.duration) }}
-            div.category-track
-              div.category-fill(:style="{ width: categoryBarWidth(category.duration) + '%' }")
+    div.lower-grid
+      div.dashboard-panel
+        div.panel-heading
+          div.section-kicker 分类
+          h4.mb-1 本周投入
+          p.text-muted.small.mb-0 沿用 ActivityWatch 分类规则
 
-      div.col-lg-6.mb-3
-        div.dashboard-panel.h-100
-          div.panel-heading
-            h4.mb-1 快速入口
-            p.text-muted.small.mb-0 常用统计放前面，复杂工具继续保留
+        div.empty-state(v-if="topCategories.length === 0")
+          | 还没有分类数据。可以去设置里给 Blender、UE、VS Code 等软件建立分类。
+        div.category-row(v-for="category in topCategories" :key="category.name")
+          div.d-flex.justify-content-between
+            span {{ category.name }}
+            strong {{ formatDuration(category.duration) }}
+          div.category-track
+            div.category-fill(:style="{ width: categoryBarWidth(category.duration) + '%' }")
 
-          div.quick-grid
-            router-link.quick-card(:to="advancedActivityPath")
-              strong 高级 Activity
-              span 原版详细统计、筛选与自定义视图
-            router-link.quick-card(to="/timeline")
-              strong Timeline
-              span 按时间顺序复盘一天
-            router-link.quick-card(to="/settings/categorization")
-              strong 软件分类
-              span 把 UE、Blender、编程工具归到技能方向
-            router-link.quick-card(to="/buckets")
-              strong 原始数据
-              span 查看设备与 watcher 数据源
+      div.dashboard-panel
+        div.panel-heading
+          div.section-kicker 入口
+          h4.mb-1 更多
+          p.text-muted.small.mb-0 复杂功能继续保留，但不挤占首页
+
+        div.quick-grid
+          router-link.quick-card(:to="advancedActivityPath")
+            strong 详细统计
+            span 原版 Activity 视图、筛选与自定义
+          router-link.quick-card(to="/timeline")
+            strong 时间线
+            span 按时间顺序复盘一天
+          router-link.quick-card(to="/settings/categorization")
+            strong 软件分类
+            span 给常用软件建立分类规则
+          router-link.quick-card(to="/buckets")
+            strong 原始数据
+            span 查看设备与 watcher 数据源
 </template>
 
 <script lang="ts">
@@ -211,6 +245,12 @@ interface AggregateResult {
   title_events?: IEvent[];
 }
 
+interface UsageTier {
+  hours: number;
+  color: string;
+  label: string;
+}
+
 const EMPTY_AGGREGATE: AggregateResult = {
   duration: 0,
   app_events: [],
@@ -220,6 +260,47 @@ const EMPTY_AGGREGATE: AggregateResult = {
 };
 
 const WEEKDAY_ZH = ['', '一', '二', '三', '四', '五', '六', '日'];
+
+const USAGE_TIERS: UsageTier[] = [
+  { hours: 1000, color: '#111111', label: '黑 · 1000h' },
+  { hours: 800, color: '#facc15', label: '黄 · 800h' },
+  { hours: 500, color: '#ef4444', label: '红 · 500h' },
+  { hours: 200, color: '#f97316', label: '橙 · 200h' },
+  { hours: 100, color: '#8b5cf6', label: '紫 · 100h' },
+  { hours: 50, color: '#3b82f6', label: '蓝 · 50h' },
+  { hours: 20, color: '#22c55e', label: '绿 · 20h' },
+  { hours: 10, color: '#f8fafc', label: '白 · 10h' },
+  { hours: 0, color: '#94a3b8', label: '灰 · <10h' },
+];
+
+const APP_ICON_MATCHES: { needles: string[]; slug: string }[] = [
+  { needles: ['blender'], slug: 'blender' },
+  { needles: ['unrealeditor', 'unreal engine', 'ue5'], slug: 'unrealengine' },
+  { needles: ['visual studio code', 'code.exe', 'code - insiders'], slug: 'visualstudiocode' },
+  { needles: ['devenv', 'visual studio'], slug: 'visualstudio' },
+  { needles: ['chrome'], slug: 'googlechrome' },
+  { needles: ['edge'], slug: 'microsoftedge' },
+  { needles: ['firefox'], slug: 'firefoxbrowser' },
+  { needles: ['safari'], slug: 'safari' },
+  { needles: ['photoshop'], slug: 'adobephotoshop' },
+  { needles: ['illustrator'], slug: 'adobeillustrator' },
+  { needles: ['premiere'], slug: 'adobepremierepro' },
+  { needles: ['after effects'], slug: 'adobeaftereffects' },
+  { needles: ['figma'], slug: 'figma' },
+  { needles: ['obsidian'], slug: 'obsidian' },
+  { needles: ['notion'], slug: 'notion' },
+  { needles: ['discord'], slug: 'discord' },
+  { needles: ['spotify'], slug: 'spotify' },
+  { needles: ['steam'], slug: 'steam' },
+  { needles: ['docker'], slug: 'docker' },
+  { needles: ['github'], slug: 'github' },
+  { needles: ['unity'], slug: 'unity' },
+  { needles: ['davinci'], slug: 'davinciresolve' },
+  { needles: ['revit', 'autocad', 'autodesk'], slug: 'autodesk' },
+  { needles: ['python'], slug: 'python' },
+  { needles: ['powershell'], slug: 'powershell' },
+  { needles: ['ollama'], slug: 'ollama' },
+];
 
 export default {
   name: 'Home',
@@ -242,8 +323,19 @@ export default {
       },
       topApps: [] as RankedItem[],
       lifetimeApps: [] as RankedItem[],
+      lifetimeAppTotals: {} as Record<string, number>,
       topCategories: [] as RankedItem[],
       dailyTrend: [] as TrendDay[],
+      usageLegend: [
+        { label: '10h', color: '#f8fafc', border: '#cbd5e1' },
+        { label: '20h', color: '#22c55e' },
+        { label: '50h', color: '#3b82f6' },
+        { label: '100h', color: '#8b5cf6' },
+        { label: '200h', color: '#f97316' },
+        { label: '500h', color: '#ef4444' },
+        { label: '800h', color: '#facc15' },
+        { label: '1000h', color: '#111111' },
+      ],
       activityStore: useActivityStore(),
       bucketsStore: useBucketsStore(),
       categoryStore: useCategoryStore(),
@@ -391,7 +483,6 @@ export default {
         const params = {
           bid_window: windowBuckets[0],
           bid_afk: afkBuckets[0],
-          // Dashboard only needs app/category totals, so skip browser-domain work.
           bid_browsers: [],
           filter_afk: true,
           include_audible: false,
@@ -526,7 +617,6 @@ export default {
     },
 
     async loadDashboard(): Promise<void> {
-      // Stop an older background lifetime query before refreshing or switching devices.
       if (this.loadVersion > 0) {
         getClient().abort();
       }
@@ -539,6 +629,7 @@ export default {
       this.summary = { today: 0, week: 0, month: 0, lifetime: 0 };
       this.topApps = [];
       this.lifetimeApps = [];
+      this.lifetimeAppTotals = {};
       this.topCategories = [];
       this.dailyTrend = [];
       this.lifetimeProgress = { done: 0, total: 0 };
@@ -628,9 +719,6 @@ export default {
         let cursor = moment(earliest);
         const chunks: { start: string; days: number }[] = [];
 
-        // Keep lifetime requests bounded. 92 days matches ActivityWatch's own
-        // long-range day-resolution threshold and stays comfortably below the
-        // server's request timeout on typical local databases.
         while (cursor.isBefore(endExclusive)) {
           const next = moment.min(cursor.clone().add(92, 'days'), endExclusive.clone());
           const days = Math.max(1, next.diff(cursor, 'days'));
@@ -662,6 +750,7 @@ export default {
         if (version !== this.loadVersion) return;
 
         this.summary.lifetime = totalDuration;
+        this.lifetimeAppTotals = Object.fromEntries(appTotals.entries());
         this.lifetimeApps = Array.from(appTotals.entries())
           .map(([name, duration]) => ({ name, duration }))
           .sort((a, b) => b.duration - a.duration)
@@ -677,6 +766,41 @@ export default {
           this.lifetimeLoading = false;
         }
       }
+    },
+
+    appIconUrl(name: string): string {
+      const normalized = String(name || '').toLowerCase();
+      const match = APP_ICON_MATCHES.find(item =>
+        item.needles.some(needle => normalized.includes(needle))
+      );
+      return match ? `https://cdn.simpleicons.org/${match.slug}` : '';
+    },
+
+    appInitial(name: string): string {
+      const trimmed = String(name || '?').trim();
+      return trimmed ? trimmed.charAt(0).toUpperCase() : '?';
+    },
+
+    onIconError(event: Event): void {
+      const target = event.currentTarget as HTMLImageElement | null;
+      if (target) target.style.display = 'none';
+    },
+
+    appLifetimeDuration(name: string, fallbackDuration: number): number {
+      return this.lifetimeAppTotals[name] || fallbackDuration || 0;
+    },
+
+    usageTier(name: string, fallbackDuration: number): UsageTier {
+      const hours = this.appLifetimeDuration(name, fallbackDuration) / 3600;
+      return USAGE_TIERS.find(tier => hours >= tier.hours) || USAGE_TIERS[USAGE_TIERS.length - 1];
+    },
+
+    usageTierColor(name: string, fallbackDuration: number): string {
+      return this.usageTier(name, fallbackDuration).color;
+    },
+
+    usageTierLabel(name: string, fallbackDuration: number): string {
+      return this.usageTier(name, fallbackDuration).label;
     },
 
     formatDuration(seconds: number): string {
@@ -715,14 +839,22 @@ export default {
 
 <style lang="scss" scoped>
 .personal-dashboard {
-  max-width: 1180px;
+  max-width: 1220px;
   margin: 0 auto;
 }
 
-.eyebrow {
+.dashboard-header h2 {
+  font-weight: 760;
+  letter-spacing: -0.035em;
+}
+
+.eyebrow,
+.section-kicker,
+.hero-kicker {
   font-size: 0.72rem;
   letter-spacing: 0.14em;
   font-weight: 700;
+  text-transform: uppercase;
   opacity: 0.58;
 }
 
@@ -730,108 +862,293 @@ export default {
   min-height: 1.25rem;
 }
 
-.metric-card,
+.overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(260px, 0.8fr);
+  gap: 1rem;
+}
+
+.hero-card,
+.summary-card,
 .dashboard-panel {
-  border: 1px solid rgba(127, 127, 127, 0.2);
-  border-radius: 14px;
-  background: rgba(127, 127, 127, 0.045);
+  border: 1px solid rgba(127, 127, 127, 0.18);
+  background: linear-gradient(145deg, rgba(127, 127, 127, 0.055), rgba(127, 127, 127, 0.018));
+  box-shadow: 0 10px 30px rgba(20, 25, 35, 0.045);
 }
 
-.metric-card {
-  padding: 1.15rem;
+.hero-card {
+  min-height: 245px;
+  padding: 1.5rem;
+  border-radius: 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
-.metric-label,
-.metric-subtitle {
+.hero-value {
+  margin: 0.2rem 0 0.3rem;
+  font-size: clamp(2.5rem, 6vw, 4.7rem);
+  line-height: 0.98;
+  font-weight: 760;
+  letter-spacing: -0.06em;
+}
+
+.hero-subtitle,
+.summary-note,
+.app-meta {
   color: #7c8188;
 }
 
-.metric-label {
-  font-size: 0.82rem;
-  font-weight: 600;
+.hero-subtitle {
+  font-size: 0.85rem;
 }
 
-.metric-value {
-  margin: 0.25rem 0 0.15rem;
-  font-size: clamp(1.55rem, 3vw, 2.15rem);
+.hero-divider {
+  height: 1px;
+  margin: 1.35rem 0 1rem;
+  background: rgba(127, 127, 127, 0.16);
+}
+
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.hero-stat {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.hero-stat span {
+  margin-bottom: 0.18rem;
+  color: #858a90;
+  font-size: 0.75rem;
+}
+
+.hero-stat strong {
+  overflow: hidden;
+  font-size: 1rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.side-summary {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 1rem;
+}
+
+.summary-card {
+  padding: 1.2rem;
+  border-radius: 18px;
+}
+
+.summary-label {
+  color: #858a90;
+  font-size: 0.76rem;
+  font-weight: 650;
+}
+
+.summary-value {
+  margin: 0.28rem 0 0.2rem;
+  font-size: clamp(1.65rem, 3vw, 2.25rem);
   line-height: 1.05;
-  font-weight: 700;
-  letter-spacing: -0.035em;
+  font-weight: 740;
+  letter-spacing: -0.04em;
 }
 
-.metric-subtitle {
-  font-size: 0.78rem;
+.summary-period {
+  margin: 0.35rem 0 0.2rem;
+  font-size: 1.05rem;
+  font-weight: 680;
+}
+
+.summary-note {
+  font-size: 0.76rem;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.75fr);
+  gap: 1rem;
+}
+
+.lower-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
 }
 
 .dashboard-panel {
-  padding: 1.2rem;
+  padding: 1.25rem;
+  border-radius: 18px;
 }
 
 .panel-heading {
   margin-bottom: 1rem;
 }
 
+.panel-heading h4 {
+  font-weight: 720;
+  letter-spacing: -0.025em;
+}
+
 .device-pill {
-  padding: 0.28rem 0.58rem;
+  padding: 0.32rem 0.62rem;
   border-radius: 999px;
-  background: rgba(127, 127, 127, 0.12);
+  background: rgba(127, 127, 127, 0.1);
   color: #747980;
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   white-space: nowrap;
+}
+
+.app-list {
+  display: flex;
+  flex-direction: column;
 }
 
 .app-row {
   display: grid;
-  grid-template-columns: 1.8rem minmax(0, 1fr);
-  gap: 0.55rem;
+  grid-template-columns: 1.8rem 2.75rem minmax(0, 1fr);
+  gap: 0.72rem;
   align-items: center;
-  padding: 0.48rem 0;
+  padding: 0.62rem 0;
+  border-top: 1px solid rgba(127, 127, 127, 0.09);
+}
+
+.app-row:first-child {
+  border-top: 0;
 }
 
 .app-rank {
-  color: #8a8f95;
-  font-size: 0.78rem;
+  color: #9aa0a8;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
   text-align: center;
 }
 
-.app-name {
+.app-icon-shell {
+  position: relative;
+  width: 2.55rem;
+  height: 2.55rem;
+  display: grid;
+  place-items: center;
   overflow: hidden;
+  border: 2px solid #cbd5e1;
+  border-radius: 12px;
+  background: rgba(127, 127, 127, 0.055);
+  transition: border-color 180ms ease;
+}
+
+.app-icon-fallback {
+  font-size: 0.95rem;
+  font-weight: 760;
+  opacity: 0.65;
+}
+
+.app-icon {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0.48rem;
+  object-fit: contain;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.app-info {
+  min-width: 0;
+}
+
+.app-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.app-name {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.92rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .app-duration {
-  margin-left: 0.75rem;
-  color: #777d84;
-  font-size: 0.8rem;
+  color: #696f77;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+.app-meta {
+  margin-top: 0.1rem;
+  font-size: 0.7rem;
 }
 
 .usage-track,
 .category-track {
-  height: 5px;
-  margin-top: 0.35rem;
+  height: 6px;
+  margin-top: 0.42rem;
   overflow: hidden;
   border-radius: 999px;
-  background: rgba(127, 127, 127, 0.12);
+  background: rgba(127, 127, 127, 0.11);
 }
 
 .usage-fill,
 .category-fill {
   height: 100%;
   border-radius: inherit;
-  background: currentColor;
-  color: #6b8afd;
-  opacity: 0.88;
+  transition: width 220ms ease, background-color 220ms ease;
+}
+
+.usage-fill {
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
 }
 
 .category-fill {
-  color: #65a985;
+  background: #6b8afd;
+  opacity: 0.82;
+}
+
+.tier-legend {
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(127, 127, 127, 0.11);
+}
+
+.tier-legend-title {
+  margin-bottom: 0.48rem;
+  color: #858a90;
+  font-size: 0.7rem;
+}
+
+.tier-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.82rem;
+}
+
+.tier-item {
+  display: flex;
+  align-items: center;
+  gap: 0.32rem;
+  color: #858a90;
+  font-size: 0.68rem;
+}
+
+.tier-dot {
+  width: 0.58rem;
+  height: 0.58rem;
+  border: 1px solid transparent;
+  border-radius: 50%;
 }
 
 .category-row {
-  padding: 0.48rem 0;
-  font-size: 0.9rem;
+  padding: 0.5rem 0;
+  font-size: 0.88rem;
 }
 
 .streak-box {
@@ -841,21 +1158,21 @@ export default {
 }
 
 .streak-number {
-  font-size: 1.9rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-size: 2rem;
+  font-weight: 740;
+  letter-spacing: -0.04em;
 }
 
 .streak-copy {
   color: #7b8086;
-  font-size: 0.84rem;
+  font-size: 0.8rem;
 }
 
 .trend-chart {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 0.45rem;
-  height: 190px;
+  height: 205px;
 }
 
 .trend-column {
@@ -868,24 +1185,24 @@ export default {
 
 .trend-value,
 .trend-day {
-  font-size: 0.7rem;
   color: #7d8288;
+  font-size: 0.68rem;
 }
 
 .trend-bar-wrap {
-  height: 132px;
+  height: 146px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  border-bottom: 1px solid rgba(127, 127, 127, 0.18);
+  border-bottom: 1px solid rgba(127, 127, 127, 0.16);
 }
 
 .trend-bar {
   width: min(28px, 70%);
   min-height: 2px;
-  border-radius: 5px 5px 2px 2px;
-  background: #6b8afd;
-  opacity: 0.82;
+  border-radius: 6px 6px 2px 2px;
+  background: linear-gradient(180deg, #7d95f7, #5f79e8);
+  opacity: 0.88;
   transition: height 180ms ease;
 }
 
@@ -898,32 +1215,34 @@ export default {
 .quick-card {
   display: flex;
   flex-direction: column;
-  min-height: 96px;
+  min-height: 92px;
   padding: 0.85rem;
-  border: 1px solid rgba(127, 127, 127, 0.18);
-  border-radius: 11px;
+  border: 1px solid rgba(127, 127, 127, 0.15);
+  border-radius: 12px;
   color: inherit;
   text-decoration: none;
-  background: rgba(127, 127, 127, 0.035);
+  background: rgba(127, 127, 127, 0.025);
+  transition: transform 150ms ease, border-color 150ms ease, background-color 150ms ease;
 }
 
 .quick-card:hover {
+  border-color: rgba(107, 138, 253, 0.48);
+  background: rgba(107, 138, 253, 0.045);
   text-decoration: none;
-  border-color: rgba(107, 138, 253, 0.55);
   transform: translateY(-1px);
 }
 
 .quick-card span {
   margin-top: 0.35rem;
   color: #7c8188;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   line-height: 1.35;
 }
 
 .empty-state {
   padding: 1rem 0;
   color: #858a90;
-  font-size: 0.88rem;
+  font-size: 0.86rem;
 }
 
 .small-spinner {
@@ -931,9 +1250,32 @@ export default {
   height: 1.15rem;
 }
 
+@media (max-width: 991.98px) {
+  .overview-grid,
+  .content-grid,
+  .lower-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .side-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: none;
+  }
+}
+
 @media (max-width: 575.98px) {
   .dashboard-header h2 {
-    font-size: 1.6rem;
+    font-size: 1.7rem;
+  }
+
+  .hero-card {
+    min-height: 220px;
+    padding: 1.1rem;
+  }
+
+  .hero-stats,
+  .side-summary {
+    grid-template-columns: 1fr;
   }
 
   .quick-grid {
@@ -946,6 +1288,21 @@ export default {
 
   .device-pill {
     display: none;
+  }
+
+  .app-row {
+    grid-template-columns: 1.45rem 2.4rem minmax(0, 1fr);
+    gap: 0.52rem;
+  }
+
+  .app-icon-shell {
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 10px;
+  }
+
+  .tier-items {
+    gap: 0.42rem 0.62rem;
   }
 }
 </style>
